@@ -15,6 +15,7 @@ on the date shown.
 :{pink-highlight}[**final project**] ·
 :{gray}[breaks / no class].
 An asterisk (`*`) marks the open-ended assignments.
+:::
 
 :::{schedule}
 % day rows: [color] date | topic [| readings] — topic and readings are plain markdown
