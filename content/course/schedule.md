@@ -6,7 +6,9 @@ for updates throughout the semester. Each lecture lists its assigned
 lecture. All assignment and final-project deadlines are **11:59:00 PM Eastern**
 on the date shown.
 
-**Legend.** Non-lecture dates are color-coded:
+:::{admonition} Legend
+:class: note 
+ Non-lecture dates are color-coded:
 :{blue-highlight}[**autograded assignment**] (AI forbidden) ·
 :{green-highlight}[**open-ended assignment\***] (AI allowed) ·
 :{orange-highlight}[**exam**] ·

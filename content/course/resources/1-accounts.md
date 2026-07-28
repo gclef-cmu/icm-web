@@ -1,7 +1,7 @@
 # Accounts
 
 ### Gradescope
-You will use gradescope to submit all of your assignments. At the start of the semester you should have been invited to join the 15-322/622 Gradescope course via email. If you haven't recieved an invitation, please email the course staff at [icm-csd@cmu.edu](mailto:icm-csd@cmu.edu). 
+You will use gradescope to submit all of your assignments. At the start of the semester you should have been invited to join the 15-322/622 Gradescope course via email. If you haven't received an invitation, please email the course staff at [icm-csd@cmu.edu](mailto:icm-csd@cmu.edu). 
 
 **Gradescope Link : [https://www.gradescope.com/courses/1326756](https://www.gradescope.com/courses/1326756)**
 
@@ -11,7 +11,7 @@ Piazza is our class discussion forum where we will post announcements, answer yo
 **Piazza Link : [https://piazza.com/cmu/fall2026/1532215622](https://piazza.com/cmu/fall2026/1532215622)**
 
 ### Freesound
-You will need to use Freesound for assignments, and Pyquist's `freesound` features. Freesound gives you access to almost a million sounds released under the Creative Commons which you can incorperate into your compositions, and test your created effects. 
+You will need to use Freesound for assignments, and Pyquist's `freesound` features. Freesound gives you access to almost a million sounds released under the Creative Commons which you can incorporate into your compositions, and test your created effects. 
 
 **Setup**
 1. Go to https://freesound.org/ and create an account.

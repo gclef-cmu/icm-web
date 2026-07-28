@@ -5,35 +5,25 @@ Fall 2026.
 
 Welcome! This is the course website. Use the sidebar to find the syllabus,
 weekly schedule, assignments, resources, and a showcase of student work. The
-companion **Textbook** is in the section below.
+online and interactive companion **Textbook** is also available on the sidebar.
 
 ## Course at a glance
 
 | | |
 |---|---|
-| **Lectures** | TBD |
-| **Location** | TBD |
+| **Lectures** | Tuesday, Thursday 11:00 AM - 12:20 PM |
+| **Location** | GHC 4303 |
 | **Units** | 9 (15-322) / 12 (15-622) |
-| **Prerequisites** | TBD |
-| **Discussion** | TBD |
+| **Prerequisites** | 15-122 or 15-112 |
+| **Homework** | 9 weekly assignments, 1 final project | 
+| **Exams** | Midterm 1 : 09/24, Midterm 2 : 11/05, Final : TBD |
+
 
 ## Staff
 
 | Role | Name | Office hours |
 |---|---|---|
 | Instructor | Chris Donahue | TBD |
-| TA | TBD | TBD |
-| TA | TBD | TBD |
+| TA | David Liu | TBD |
+| TA | Marco Cardenes | TBD |
 
-## Quick links
-
-- [About the course](about.md)
-- [Schedule](schedule.md)
-- [Assignments](assignments/index.md)
-- [Resources](resources/index.md)
-- [Showcase](showcase.md)
-
-:::{note}
-This page is a placeholder for Fall 2026. Logistics (meeting times, staff, and
-office hours) will be finalized before the semester begins.
-:::
