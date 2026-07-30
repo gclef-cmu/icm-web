@@ -1,21 +1,13 @@
 # Assignment 3\*: Exploring timbre and scores
 
 This is an **open-ended** assignment. Review the open-ended submission
-instructions and policies on the [Assignments page](./index.md) before you begin.
+instructions and policies on the [Assignments page](../index.md) before you begin.
 
 **Pick _one_ of the open-ended directions below.**
 
-## Direction 1 (Creative): Create a more involved cover of a song on TheoryTab
-
-TODO
-
-## Direction 2 (Technical): Clone an acoustic instrument using additive synthesis
-
-TODO
-
-## Direction 3 (Technical): Implement tap detection to create scores
-
-TODO
+- [Direction 1 (Creative): Create a more involved cover of a song on TheoryTab](./1-creative.md)
+- [Direction 2 (Technical): Clone an acoustic instrument using additive synthesis](./2-technical.md)
+- [Direction 3 (Technical): Implement tap detection to create scores](./3-technical.md)
 
 ## Due: Mon Sep 14 2026 by 11:59PM Eastern
 
@@ -29,4 +21,4 @@ Then, submit the **Gradescope-verified zip file** to Google Forms: https://forms
 
 ## Grading
 
-For grading details, see the [open-ended grading policy](./index.md#open-ended-submission-instructions-and-policies) on the Assignments page.
+For grading details, see the [open-ended grading policy](../index.md#open-ended-submission-instructions-and-policies) on the Assignments page.

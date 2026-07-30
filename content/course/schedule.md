@@ -36,7 +36,7 @@ Tue Sep 08 | **03A** · Frequency vs. time and Fourier analysis | [Ch. 5](/conte
 Thu Sep 10 | **03B** · Amplitude and ring modulation synthesis | [Ch. 6](/content/ch06/index.md)
 
 Week 4
-[green] Mon Sep 14 | [Assignment 3\*: Exploring timbre and scores (due)](assignments/03.md)
+[green] Mon Sep 14 | [Assignment 3\*: Exploring timbre and scores (due)](assignments/03/index.md)
 Tue Sep 15 | **04A** · Frequency and phase modulation synthesis | [Ch. 6](/content/ch06/index.md)
 Thu Sep 17 | **04B** · Digital sampling theory and aliasing | [Ch. 7](/content/ch07/index.md)
 

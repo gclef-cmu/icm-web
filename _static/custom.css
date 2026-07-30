@@ -143,6 +143,12 @@ html[data-theme="dark"] {
   hyphens: auto;
 }
 
+/* Long bare URLs (submission links etc.) can't fill a justified line and
+   stretch the words around them into gaps; let them break anywhere. */
+.bd-article a.reference.external {
+  overflow-wrap: anywhere;
+}
+
 /* ---- Headings: Carnegie Red chapter / section accents ---------------- */
 .bd-article h1 {
   color: var(--pst-color-primary);

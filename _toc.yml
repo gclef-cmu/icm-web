@@ -13,15 +13,19 @@ parts:
         sections:
           - file: content/course/assignments/01
           - file: content/course/assignments/02
-          - file: content/course/assignments/03
+          - file: content/course/assignments/03/index
+            sections:
+              - file: content/course/assignments/03/1-creative
+              - file: content/course/assignments/03/2-technical
+              - file: content/course/assignments/03/3-technical
           - file: content/course/assignments/04
           - file: content/course/assignments/05/index
             sections:
-              - file: content/course/assignments/05/direction-1-creative
-              - file: content/course/assignments/05/direction-2-technical
+              - file: content/course/assignments/05/1-creative
+              - file: content/course/assignments/05/2-technical
           - file: content/course/assignments/06
           - file: content/course/assignments/07
-          - file: content/course/assignments/08
+          - file: content/course/assignments/08/index
           - file: content/course/assignments/09
           - file: content/course/assignments/322-final
           - file: content/course/assignments/622-final

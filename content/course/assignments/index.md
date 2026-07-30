@@ -4,7 +4,7 @@
 
 - [Assignment 1: Hello Pyquist and Synthesis](./01.md)
 - [Assignment 2: Implementing timbre and scores](./02.md)
-- [Assignment 3\*: Exploring timbre and scores](./03.md)
+- [Assignment 3\*: Exploring timbre and scores](./03/index.md)
 - [Assignment 4: Implementing FM synthesis](./04.md)
 - [Assignment 5\*: Exploring FM synthesis](./05/index.md)
 - [Assignment 6: Implementing filters](./06.md)
