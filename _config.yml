@@ -165,6 +165,9 @@ sphinx:
       course: "15-322 / 15-622 Introduction to Computer Music"
       pyquist: "[Pyquist](https://pyquist.org)"
       pyquist_url: "https://pyquist.org"
+      # Reader-feedback Google Form; swap both values to change it everywhere.
+      feedback_url: "https://docs.google.com/forms/d/e/1FAIpQLSedHm5Hm5UdML98TGEousT9wy3dXMLvuYTp502xBHYU17RdIw/viewform?usp=dialog"
+      feedback_form: "[textbook feedback form](https://docs.google.com/forms/d/e/1FAIpQLSedHm5Hm5UdML98TGEousT9wy3dXMLvuYTp502xBHYU17RdIw/viewform?usp=dialog)"
     mathjax3_config:
       loader:
         load:

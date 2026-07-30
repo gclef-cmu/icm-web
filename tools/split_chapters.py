@@ -7,7 +7,8 @@ code blocks), demotes headings one level, copies assets/code/figures across,
 and regenerates the chapter part of _toc.yml. A section that embeds a
 companion notebook via `{interactive}`/`{animation}` is emitted as a .ipynb
 instead of .md. It also mirrors the icm-f26/ course-website submodule into
-content/course/ and copies icm-text/refs.bib to content/references.bib.
+content/course/, copies book front matter (about.md, errata.md) from
+icm-text/ to content/, and copies icm-text/refs.bib to content/references.bib.
 
 Everything is authored in MyST already, so nothing is translated — only
 restructured. Run via `make split`. WARNING: wipes content/ch*/ and
@@ -30,6 +31,7 @@ CONTENT = REPO / "content"
 TOC = REPO / "_toc.yml"
 REFS_SRC = SOURCE / "refs.bib"
 REFS_DEST = CONTENT / "references.bib"  # what _config.yml's bibtex_bibfiles points at
+FRONT_MATTER_FILES = ("about.md", "errata.md")  # authored upstream, copied verbatim
 
 COURSE_SOURCE = REPO / "icm-f26"  # course-website submodule
 COURSE_DEST = CONTENT / "course"
@@ -468,9 +470,10 @@ def regenerate_course_toc() -> None:
 
     One captioned part: top-level pages become flat `file:` entries; a
     subdirectory's index.md becomes a `file:` with its remaining pages nested
-    under `sections:` (a subdir without an index.md is listed flat). The part
-    spans from the caption to the next `- caption:`; other parts are
-    untouched.
+    under `sections:` (a subdir without an index.md is listed flat). A
+    second-level subdirectory with an index.md (e.g. assignments/05/) nests
+    its remaining pages one level deeper under that index. The part spans
+    from the caption to the next `- caption:`; other parts are untouched.
     """
     entries = sorted(
         (p for p in COURSE_DEST.iterdir() if p.is_dir() or p.suffix == ".md"),
@@ -497,7 +500,19 @@ def regenerate_course_toc() -> None:
             body.append(f"      - file: {_toc_ref(index)}")
             if sections:
                 body.append("        sections:")
-                body += [f"          - file: {_toc_ref(s)}" for s in sections]
+                for s in sections:
+                    body.append(f"          - file: {_toc_ref(s)}")
+                    # a subdir's remaining pages nest one level deeper under its index
+                    if s.stem == "index":
+                        children = sorted(
+                            (q for q in s.parent.glob("*.md") if q.stem != "index"),
+                            key=lambda q: natural_key(q.name),
+                        )
+                        if children:
+                            body.append("            sections:")
+                            body += [
+                                f"              - file: {_toc_ref(c)}" for c in children
+                            ]
         else:
             body += [f"      - file: {_toc_ref(s)}" for s in sections]
 
@@ -571,6 +586,22 @@ def sync_references() -> None:
     print(f"  synced {REFS_DEST.relative_to(REPO)}  <- icm-text/refs.bib")
 
 
+def sync_front_matter() -> None:
+    """Copy book front-matter pages verbatim from icm-text/ to content/.
+
+    A missing source means a stale submodule checkout; fail rather than
+    silently leaving a divergent copy in content/.
+    """
+    for name in FRONT_MATTER_FILES:
+        src = SOURCE / name
+        if not src.exists():
+            sys.exit(
+                f"icm-text/{name} not found — update the icm-text submodule"
+            )
+        shutil.copyfile(src, CONTENT / name)
+        print(f"  synced content/{name}  <- icm-text/{name}")
+
+
 def main() -> int:
     if not SOURCE.exists() or not any(SOURCE.iterdir()):
         sys.exit(
@@ -594,6 +625,7 @@ def main() -> int:
     regenerate_toc(results)
     print(f"  updated {TOC.relative_to(REPO)}")
     mirror_course()
+    sync_front_matter()
     sync_references()
     return 0
 

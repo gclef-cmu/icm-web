@@ -8,3 +8,5 @@ music theory and practice from a computer science perspective in Python.
 - **Textbook** — the principles of computer music, with runnable Python examples.
 
 See [About this book](about.md) for details and authorship.
+
+Have feedback or spotted an error? Tell us through the {{ feedback_form }}.

@@ -48,7 +48,7 @@ Tue Sep 22 | **05A** · Discrete Fourier Transform and Fast Fourier Transform | 
 Week 6
 Tue Sep 29 | **06A** · Filters and convolution I | [Ch. 9](/content/ch09/index.md)
 Thu Oct 01 | **06B** · Filters and convolution II | [Ch. 9](/content/ch09/index.md)
-[green] Fri Oct 02 | [Assignment 5\*: Exploring FM synthesis (due — Friday)](assignments/05.md)
+[green] Fri Oct 02 | [Assignment 5\*: Exploring FM synthesis (due — Friday)](assignments/05/index.md)
 
 Week 7
 [pink] Mon Oct 05 | [15-622 (Grad) Final Project — Proposal (due)](assignments/622-final.md)
