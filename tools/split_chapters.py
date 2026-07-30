@@ -465,6 +465,36 @@ def course_order_key(path: Path):
     return (rank, natural_key(path.name))
 
 
+def _short_title(md_path: Path) -> str | None:
+    """Sidebar label for a course page: its H1 truncated at the first colon.
+
+    "Assignment 3\\*: Exploring timbre and scores" -> "Assignment 3*";
+    an H1 without a colon (already short) gets no override -> None.
+    """
+    try:
+        text = md_path.read_text()
+    except OSError:
+        return None
+    for line in text.splitlines():
+        m = HEADING_RE.match(line)
+        if m and len(m.group(1)) == 1:
+            h1 = m.group(2).strip()
+            if ":" not in h1:
+                return None
+            return h1.split(":", 1)[0].replace("\\*", "*").strip()
+    return None
+
+
+def _toc_entry(path: Path, indent: str) -> list[str]:
+    """`- file:` line for a course page, plus a `title:` override when the
+    page's H1 truncates at a colon (keeps the sidebar to short labels)."""
+    lines = [f"{indent}- file: {_toc_ref(path)}"]
+    title = _short_title(path)
+    if title:
+        lines.append(f'{indent}  title: "{title}"')
+    return lines
+
+
 def regenerate_course_toc() -> None:
     """Replace the "Course Information" part of _toc.yml from content/course/.
 
@@ -472,8 +502,11 @@ def regenerate_course_toc() -> None:
     subdirectory's index.md becomes a `file:` with its remaining pages nested
     under `sections:` (a subdir without an index.md is listed flat). A
     second-level subdirectory with an index.md (e.g. assignments/05/) nests
-    its remaining pages one level deeper under that index. The part spans
-    from the caption to the next `- caption:`; other parts are untouched.
+    its remaining pages one level deeper under that index. Every entry whose
+    H1 contains a colon gets a `title:` override truncated at that colon, so
+    the sidebar shows short labels ("Assignment 6") while pages keep their
+    full titles. The part spans from the caption to the next `- caption:`;
+    other parts are untouched.
     """
     entries = sorted(
         (p for p in COURSE_DEST.iterdir() if p.is_dir() or p.suffix == ".md"),
@@ -483,7 +516,7 @@ def regenerate_course_toc() -> None:
     body = ["  - caption: Course Information", "    chapters:"]
     for p in entries:
         if not p.is_dir():
-            body.append(f"      - file: {_toc_ref(p)}")
+            body += _toc_entry(p, "      ")
             continue
         mds = list(p.glob("*.md"))
         index = next((q for q in mds if q.stem == "index"), None)
@@ -497,11 +530,11 @@ def regenerate_course_toc() -> None:
             key=lambda q: natural_key(q.parent.name if q.stem == "index" else q.name)
         )
         if index is not None:
-            body.append(f"      - file: {_toc_ref(index)}")
+            body += _toc_entry(index, "      ")
             if sections:
                 body.append("        sections:")
                 for s in sections:
-                    body.append(f"          - file: {_toc_ref(s)}")
+                    body += _toc_entry(s, "          ")
                     # a subdir's remaining pages nest one level deeper under its index
                     if s.stem == "index":
                         children = sorted(
@@ -510,11 +543,11 @@ def regenerate_course_toc() -> None:
                         )
                         if children:
                             body.append("            sections:")
-                            body += [
-                                f"              - file: {_toc_ref(c)}" for c in children
-                            ]
+                            for c in children:
+                                body += _toc_entry(c, "              ")
         else:
-            body += [f"      - file: {_toc_ref(s)}" for s in sections]
+            for s in sections:
+                body += _toc_entry(s, "      ")
 
     lines = TOC.read_text().splitlines()
     try:
@@ -562,8 +595,28 @@ def mirror_course() -> None:
         copied += 1
 
     print(f"  course  {copied} file(s)  <- icm-f26/")
+    print_course_tree()
     regenerate_course_toc()
     print(f"  updated {TOC.relative_to(REPO)} (Course Information)")
+
+
+def print_course_tree() -> None:
+    """Print the mirrored content/course/ directory structure, so nesting
+    (assignment subfolders, per-assignment assets) is visible at a glance."""
+
+    def walk(d: Path, prefix: str) -> None:
+        entries = sorted(
+            (p for p in d.iterdir() if not p.name.startswith(".")),
+            key=lambda p: (p.is_file(), natural_key(p.name)),
+        )
+        for i, p in enumerate(entries):
+            tee = "└── " if i == len(entries) - 1 else "├── "
+            print(f"  {prefix}{tee}{p.name}{'/' if p.is_dir() else ''}")
+            if p.is_dir():
+                walk(p, prefix + ("    " if i == len(entries) - 1 else "│   "))
+
+    print(f"  {COURSE_DEST.relative_to(REPO)}/")
+    walk(COURSE_DEST, "")
 
 
 def sync_references() -> None:

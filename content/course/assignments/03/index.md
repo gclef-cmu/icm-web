@@ -13,11 +13,9 @@ instructions and policies on the [Assignments page](../index.md) before you begi
 
 ## Submission
 
-Download the open-ended template here: https://gclef-cmu.org/icm-autograde/f26/open-ended/starter.zip
-
-First, confirm your submission formatting is valid via Gradescope: https://www.gradescope.com/courses/1326756/assignments/8238316
-
-Then, submit the **Gradescope-verified zip file** to Google Forms: https://forms.gle/2qSfJsG3A2EdoJnU8
+1. Download the open-ended template here: https://gclef-cmu.org/icm-autograde/f26/open-ended/starter.zip
+2. First, confirm your submission formatting is valid via Gradescope: https://www.gradescope.com/courses/1326756/assignments/8238316
+3. Then, submit the **Gradescope-verified zip file** to Google Forms: https://forms.gle/2qSfJsG3A2EdoJnU8
 
 ## Grading
 

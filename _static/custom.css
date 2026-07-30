@@ -144,9 +144,11 @@ html[data-theme="dark"] {
 }
 
 /* Long bare URLs (submission links etc.) can't fill a justified line and
-   stretch the words around them into gaps; let them break anywhere. */
+   stretch the words around them into gaps. word-break (not overflow-wrap:
+   anywhere, which only breaks on overflow) makes every character a break
+   opportunity, so the justifier can fill the line up to the URL. */
 .bd-article a.reference.external {
-  overflow-wrap: anywhere;
+  word-break: break-all;
 }
 
 /* ---- Headings: Carnegie Red chapter / section accents ---------------- */
@@ -1134,10 +1136,17 @@ footer.bd-footer-content {
 }
 
 /* Tighten the vertical rhythm: trim the theme's 0.25rem link padding so a
-   captioned group reads as one block. Applies to nested links too. */
+   captioned group reads as one block. Applies to nested links too. The
+   hanging indent keeps any title that still wraps (finals pages, narrow
+   viewports) aligned under its own first character instead of the margin. */
 .bd-sidebar-primary nav.bd-links li > a {
   padding-top: 0.14rem;
   padding-bottom: 0.14rem;
+  /* Hanging indent: keep the first line at the theme's own 0.65rem link
+     padding (which clears the current-page bar) and indent only wrapped
+     continuation lines by the extra 0.75em. */
+  padding-left: calc(0.65rem + 0.75em);
+  text-indent: -0.75em;
 }
 
 /* A hair of separation between top-level entries. `margin-bottom` on every

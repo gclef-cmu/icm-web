@@ -71,9 +71,8 @@ All formulas, hints, checkpoints, and the listening test are in the starter note
 
 ## Submission
 
-First, confirm your submission formatting is valid via Gradescope: https://www.gradescope.com/courses/1326756/assignments/8238316
-
-Then, submit the **Gradescope-verified zip file** to Google Forms: https://forms.gle/2qSfJsG3A2EdoJnU8
+1. First, confirm your submission formatting is valid via Gradescope: https://www.gradescope.com/courses/1326756/assignments/8238316
+2. Then, submit the **Gradescope-verified zip file** to Google Forms: https://forms.gle/2qSfJsG3A2EdoJnU8
 
 ## Grading
 
