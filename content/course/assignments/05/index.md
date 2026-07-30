@@ -7,8 +7,8 @@ instructions and policies on the [Assignments page](../index.md) before you begi
 
 **Accomplish _either_ of the open-ended directions below.**
 
-- [Direction 1 (Creative): A 30-60s Song](./direction-1-creative.md)
-- [Direction 2 (Technical): A DX-7 Instrument](./direction-2-technical.md)
+- [Direction 1 (Creative): A 30-60s Song](./1-creative.md)
+- [Direction 2 (Technical): A DX-7 Instrument](./2-technical.md)
 
 ## Submission
 

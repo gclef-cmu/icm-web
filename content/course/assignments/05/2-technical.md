@@ -17,10 +17,10 @@ The DX-7 is a famous FM synthesizer made by Yamaha from the 1980s. It includes 3
 ## DX-7 Algorithm
 
 This algorithm is made up of 6 **operators**. Each operator must be provided with a carrier frequency, envelope, output level, and optionally, a modulation signal. Very simply, this is what an operator looks like :
-![DX-7 Operator](../assets/dx7-operator.png)
+![DX-7 Operator](./assets/dx7-operator.png)
 
 Below are the 32 different operator topologies. For clarity, and adjoining lines means signal addition, and incoming lines to an operator are chaining (akin to Assignment 4 task 3).
-![DX-7 Algorithms](../assets/dx7-algorithms.jpg)
+![DX-7 Algorithms](./assets/dx7-algorithms.jpg)
 
 For example, let's look at Algorithm 8. Each box represents an operator (oscillator). Operators 1 and 3 (in blue), are combined to form the output. The remaining operators provide modulation, as indicated by the lines. Operator 2 modulates operator 1. Operators 4 and 5 are combined to modulate operator 3, providing a complex modulation. Operator 6, in turn, modulates operator 5. Finally, the line looping around operator 4 indicates that operator 4 modulates itself. Since each modulation level can vary over time, the resulting sound can be very complex.
 

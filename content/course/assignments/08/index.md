@@ -1,7 +1,7 @@
 # Assignment 8\*: Exploring advanced topics I
 
 This is an **open-ended** assignment. Review the open-ended submission
-instructions and policies on the [Assignments page](./index.md) before you begin.
+instructions and policies on the [Assignments page](../index.md) before you begin.
 
 ## Due: Mon Nov 02 2026 by 11:59PM Eastern
 
@@ -15,7 +15,7 @@ In Assignment 6 you learned how convolution, the Fourier transform, and filters 
 
 <!-- TODO: add photo of the circle dome in Baker Hall (assets/baker-dome.jpg) -->
 
-To capture an IR, generate a short, broadband excitation under the dome (a sine sweep played from a speaker, or a sharp impulse like a balloon pop or hand clap) and record the result. See the Autograded notebook and [resources](../resources/index.md) for guidance on turning a recording into a usable IR.
+To capture an IR, generate a short, broadband excitation under the dome (a sine sweep played from a speaker, or a sharp impulse like a balloon pop or hand clap) and record the result. See the Autograded notebook and [resources](../../resources/index.md) for guidance on turning a recording into a usable IR.
 
 **Requirements**
 - Capture your own impulse response from under the circle dome in Baker Hall
@@ -77,4 +77,4 @@ Then, submit the **Gradescope-verified zip file** to Google Forms: https://forms
 
 ## Grading
 
-For grading details, see the [open-ended grading policy](./index.md#open-ended-submission-instructions-and-policies) on the Assignments page.
+For grading details, see the [open-ended grading policy](../index.md#open-ended-submission-instructions-and-policies) on the Assignments page.

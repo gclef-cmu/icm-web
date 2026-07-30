@@ -70,7 +70,7 @@ Tue Oct 27 | **09A** · Delay lines, effects, and spatialization | [Ch. 13](/con
 Thu Oct 29 | **09B** · Algorithmic composition, Markov chains, and LPC | [Ch. 14](/content/ch14/index.md)
 
 Week 10
-[green] Mon Nov 02 | [Assignment 8\*: Exploring advanced topics I (due)](assignments/08.md)
+[green] Mon Nov 02 | [Assignment 8\*: Exploring advanced topics I (due)](assignments/08/index.md)
 [gray] Tue Nov 03 | **10A** · Democracy Day — no class
 [orange] Thu Nov 05 | Exam 2 — cumulative, emphasis 05A–09B (Ch. 8–14); Assignments 6, 7
 
