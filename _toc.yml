@@ -15,15 +15,14 @@ parts:
             title: "Assignment 1"
           - file: content/course/assignments/02
             title: "Assignment 2"
+          - file: content/course/assignments/03
+            title: "Assignment 3*"
           - file: content/course/assignments/03/index
             title: "Assignment 3*"
             sections:
               - file: content/course/assignments/03/1-creative
-                title: "Direction 1 (Creative)"
               - file: content/course/assignments/03/2-technical
-                title: "Direction 2 (Technical)"
               - file: content/course/assignments/03/3-technical
-                title: "Direction 3 (Technical)"
           - file: content/course/assignments/04
             title: "Assignment 4"
           - file: content/course/assignments/05/index

@@ -13,6 +13,9 @@ This guide walks you through everything you need to prepare your computer for th
 
 If you follow these instructions carefully, you should not need to troubleshoot anything else before beginning the course.
 
+:::{tip}
+If you're having any issues with installations, come to OH, email us, or check the FAQ section below.
+:::
 
 ## 1. Install Python
 

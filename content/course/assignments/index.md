@@ -70,7 +70,7 @@ Place all of the following files in a single zip file:
 
 This format centers around accomplishing an ambitious technical computer music programming goal, and documenting your accomplishments with a video demonstration.
 
-An ideal submission involves accomplishing an ambitious technical goal and conforming to all stated requirements. Degree of ambition expected will vary with the amount of self-reported AI coding assistance (more AI = higher expectaitons, less AI = lower expectations).
+An ideal submission involves accomplishing an ambitious technical goal and conforming to all stated requirements. Degree of ambition expected will vary with the amount of self-reported AI coding assistance (more AI = higher expectations, less AI = lower expectations).
 
 Your video presentation _must_ adhere to the following format:
 
