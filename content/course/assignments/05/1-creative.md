@@ -6,6 +6,8 @@ The FM oscillators you implemented in Assignment 4 allow for much more sophistic
 - Define 2+ custom FM instruments which are meaningfully different from each other
 - Configure your instruments to use time-varying parameters via envelopes or other oscillators
 - At least one instrument should use vibrato, portamento, or tremolo
+- Your song must be a `pq.Score` that is rendered with your instruments using `pq.Score.render`
+- A significant portion of creating the song must be done in Pyquist
 - Song must be 30 to 60 seconds in length
 - In `CREATIVE.md`, include
   - A description of your song and the creative intent behind it

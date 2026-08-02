@@ -39,4 +39,4 @@ pq.play(note)
 - Want to learn more? Check out [This Website](https://yamahablackboxes.com/articles/how-to-program-yamaha-dx7/) or [This one](https://www.tinyloops.com/doc/yamaha_dx7/algorithms.html)
 
 **Self-Modulation**
-What the DX7 actually does, is compute modulation with a 1 sample delay. Mathematically, $\phi_{n+1} = \phi_n + \dfrac{2 \pi f_c}{f_s} + I y[n]; \hspace y[n] = \sin(\phi_n)$, where $y[n]$ is the output of the oscillator at time $n$. This means that the output of the oscillator at time $n$ is used to modulate itself at time $n+1$. Use a forloop or `np.cumsum` to implement this.
+What the DX7 actually does, is compute modulation with a 1 sample delay. Mathematically, $\phi_{n+1} = \phi_n + \dfrac{2 \pi f_c}{f_s} + I y[n]$, $y[n] = \sin(\phi_n)$, where $y[n]$ is the output of the oscillator at time $n$. This means that the output of the oscillator at time $n$ is used to modulate itself at time $n+1$. Use a forloop or `np.cumsum` to implement this.

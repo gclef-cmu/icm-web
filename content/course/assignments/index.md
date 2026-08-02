@@ -2,43 +2,69 @@
 
 ## List of released assignments
 
-- [Assignment 1: Hello Pyquist and Synthesis](./01.md)
-- [Assignment 2: Implementing timbre and scores](./02.md)
-- [Assignment 3\*: Exploring timbre and scores](./03/index.md)
-- [Assignment 4: Implementing FM synthesis](./04.md)
-- [Assignment 5\*: Exploring FM synthesis](./05/index.md)
-- [Assignment 6: Implementing filters](./06.md)
-- [Assignment 7: Implementing frame-based processing](./07.md)
+- :{blue}[Assignment 1: Hello Pyquist and Synthesis](./01.md)
+- :{blue}[Assignment 2: Implementing timbre and scores](./02.md)
+- :{green}[Assignment 3\*: Exploring timbre and scores](./03/index.md)
+- :{blue}[Assignment 4: Implementing FM synthesis](./04.md)
+- :{green}[Assignment 5\*: Exploring FM synthesis](./05/index.md)
+- :{blue}[Assignment 6: Implementing filters](./06.md)
+- :{blue}[Assignment 7: Implementing frame-based processing](./07.md)
 
+:::{seealso}
 See the [Schedule](../schedule.md) for the full list of assignments and their due dates.
+:::
 
 ## Submission instructions and policies
 
 Each assignment in this course is one of two types:
 
-- **Autograded assignments** are submitted via an assignment-specific Gradescope link and graded largely automatically.
-- **Open-ended assignments** are marked with an asterisk (`*`) throughout the course (e.g., Assignment 3\*). These are checked with a [common Gradescope validation tool](https://www.gradescope.com/courses/1326756/assignments/8238316) and then [submitted via Google Forms](https://forms.gle/Q2fjknDhxNMsR24J7).
+::::{grid} 1 1 2 2
 
+:::{grid-item-card}
+**Autograded assignments** are submitted via an assignment-specific Gradescope link and graded largely automatically.
+:::
+
+:::{grid-item-card}
+**Open-ended assignments** are marked with an asterisk (`*`) throughout the course (e.g., Assignment 3\*). These are checked with a [common Gradescope validation tool](https://www.gradescope.com/courses/1326756/assignments/8238316) and then [submitted via Google Forms](https://forms.gle/Q2fjknDhxNMsR24J7).
+:::
+
+::::
+
+:::{important}
 **Assignments marked with an asterisk (`*`) are the open-ended, AI-allowed assignments.** They follow the open-ended submission instructions and policies below; all other assignments follow the autograded instructions and policies.
+:::
 
-**Academic integrity**. **You cannot work with other students on assignments.** All work must be your own. Some assignments will allow you to use AI tools. If you choose to use AI, **you remain responsible for _every bit_ of information in your submissions.**
+:::{admonition} Academic integrity
+:class: warning
+**You cannot work with other students on assignments.** All work must be your own. Some assignments will allow you to use AI tools. If you choose to use AI, **you remain responsible for _every bit_ of information in your submissions.**
+:::
 
-**Enforcement**. **We reserve the right at any time to give you an oral or written quiz on the details of your submission.** These quizzes will be trivial if you completed your work appropriately, or difficult if you worked with other students or used AI inappropriately. E.g., "Which of these functions did your implementation call for task 4", or "Which of these sentences appeared in your assignment writeup". If you fail one of these quizzes, we will give you a 0 on the assignment, and could result in a report to the university for an academic integrity violation.
+:::{admonition} Enforcement
+:class: warning
+**We reserve the right at any time to give you an oral or written quiz on the details of your submission.** These quizzes will be trivial if you completed your work appropriately, or difficult if you worked with other students or used AI inappropriately. E.g., "Which of these functions did your implementation call for task 4", or "Which of these sentences appeared in your assignment writeup". If you fail one of these quizzes, we will give you a 0 on the assignment, and could result in a report to the university for an academic integrity violation.
+:::
 
-**Late work**. To get full credit, **you must upload your assignment to the correct portal by 11:59:00p Eastern Time on the day of the deadline**. See our [course syllabus](../syllabus.md) for the late submission policy and information on partial credit.
+:::{admonition} Late work
+:class: important
+To get full credit, **you must upload your assignment to the correct portal by 11:59:00p Eastern Time on the day of the deadline**. See our [course syllabus](../syllabus.md) for the late submission policy and information on partial credit.
+:::
 
 ### Autograded submission instructions and policies
 
 Autograded assignments will be submitted via [Gradescope](https://www.gradescope.com/courses/1326756). Please see each assignment description for a link to the Gradescope submission portal specific to that assignment.
 
+:::{warning}
 **You are _not_ allowed to use AI when completing autograded assignments** (except in rare cases when specified in the assignment description, for example the last task of Assignment 1). See [above info](#submission-instructions-and-policies) for enforcement policies.
+:::
 
 #### **Grading policy**
 
 Your grade for an autograded assignment will be calculated as:
 
-- 70% autograded score (e.g., 14/15 on Gradescope is 65.3% points)
+- 70% autograded score
 - 30% free text responses (manually graded by TAs)
+
+Within the autograded score, all tasks are equally weighted unless otherwise specified.
 
 ### Open-ended submission instructions and policies
 
@@ -46,9 +72,13 @@ These instructions apply to the open-ended assignments (those marked with an ast
 
 When you are ready to submit, validate your zip file with this [Gradescope validation tool](https://www.gradescope.com/courses/1326756/assignments/8238316) and then [submit via Google Forms](https://forms.gle/Q2fjknDhxNMsR24J7). You may update your Google Forms submission as many times as you like - we will use your last submission before the deadline.
 
+:::{tip}
 **You _are_ allowed to use AI when completing open-ended assignments.** If you use AI, you are expected to iterate closely with the AI system and retain the agency on high-level directions and decisions. Regardless of if you use AI, **you are responsible for reading and verifying every bit of code and information submitted in your zip file.**
+:::
 
-#### **Creative format**
+::::{tab-set}
+
+:::{tab-item} Creative format
 
 This format centers around creating a musical composition by combining a creative vision with technical computer music programming.
 
@@ -66,7 +96,9 @@ Place all of the following files in a single zip file:
 
 **[Click here to download the template for `CREATIVE.md`](https://gclef-cmu.org/icm-autograde/f26/open-ended/starter.zip)**. Your `CREATIVE.md` file should be formatted exactly like this template. Namely, all `## Section Headings` should remain unchanged, but otherwise all text below should be replaced with your own writing.
 
-#### **Technical format**
+:::
+
+:::{tab-item} Technical format
 
 This format centers around accomplishing an ambitious technical computer music programming goal, and documenting your accomplishments with a video demonstration.
 
@@ -100,6 +132,10 @@ Place all of the following files in a single zip file:
 1. `src/`: A directory containing your Python/Pyquist code. Any structure is fine within this directory, as long sufficient documentation appears in `TECHNICAL.md` (see below). Include all dependencies necessary to execute your code, including code dependencies and sound assets. Any dependency that we can `pip install` does _not_ need to be included.
 
 **[Click here to download the template for `TECHNICAL.md`](https://gclef-cmu.org/icm-autograde/f26/open-ended/starter.zip)**. Your `TECHNICAL.md` file should be formatted exactly like this template. Namely, all `## Section Headings` should remain unchanged, but otherwise all text below should be replaced with your own writing.
+
+:::
+
+::::
 
 #### **Grading policy**
 

@@ -38,6 +38,13 @@ parts:
             title: "Assignment 7"
           - file: content/course/assignments/08/index
             title: "Assignment 8*"
+            sections:
+              - file: content/course/assignments/08/1-creative
+                title: "Direction 1 (Creative)"
+              - file: content/course/assignments/08/2-technical
+                title: "Direction 2 (Technical)"
+              - file: content/course/assignments/08/3-technical
+                title: "Direction 3 (Technical)"
           - file: content/course/assignments/09
             title: "Assignment 9*"
           - file: content/course/assignments/322-final
