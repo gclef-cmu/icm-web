@@ -432,9 +432,31 @@ def make_audio() -> None:
     write_audio(taper(fm(200.0, 280.0, 3.0 * 280.0, dur)), "audio-fm-bell.wav")
 
 
+def fig_riemann_sum() -> None:
+    """A Riemann sum approximating the area under a curve (for the
+    time-varying-frequency section, and referenced from Chapter 8)."""
+    g = lambda u: 0.6 + 0.5 * np.sin(2 * np.pi * 0.5 * u) * np.exp(-0.15 * u)
+    fig, ax = plt.subplots(figsize=(11, 3.6))
+    u = np.linspace(0, 8, 500)
+    edges = np.arange(0, 8, 0.125)
+    for e in edges:
+        ax.add_patch(plt.Rectangle((e, 0), 0.125, g(e), facecolor=COLORS[2],
+                                   alpha=0.35, edgecolor=COLORS[2], linewidth=1.0))
+    ax.plot(u, g(u), color=COLORS[0], linewidth=2.5, zorder=5, label=r"$\omega(\tau)$")
+    ax.annotate(r"width $\Delta t$", xy=(edges[24] + 0.06, 0.06), ha="center",
+                fontsize=12, color="0.3")
+    ax.set_xlabel(r"$\tau$")
+    ax.set_ylabel(r"$\omega(\tau)$")
+    ax.set_xlim(0, 8)
+    ax.set_ylim(0, 1.3)
+    ax.legend(loc="upper right", fontsize=13)
+    save_fig("fig-riemann-sum.png")
+
+
 def main() -> None:
     print("Figures:")
     fig_ringmod_time()
+    fig_riemann_sum()
     fig_sidebands()
     fig_negative_symmetry()
     fig_ringmod_full()

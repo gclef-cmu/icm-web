@@ -137,6 +137,17 @@ parts:
           - file: content/ch07/06
           - file: content/ch07/07
       - file: content/ch08/index
+        sections:
+          - file: content/ch08/00
+          - file: content/ch08/01
+          - file: content/ch08/02
+          - file: content/ch08/03
+          - file: content/ch08/04
+          - file: content/ch08/05
+          - file: content/ch08/06
+          - file: content/ch08/07
+          - file: content/ch08/08
+          - file: content/ch08/09
       - file: content/ch09/index
       - file: content/ch10/index
       - file: content/ch11/index
