@@ -24,6 +24,7 @@ SOURCE = REPO / "icm-text"  # ground-truth prose submodule
 CONTENT = REPO / "content"
 
 from split_chapters import (  # noqa: E402
+    CHAPTER_FOLDER_RE,
     FENCE_RE,
     HEADING_RE,
     split_chapter as split_one_chapter,
@@ -113,14 +114,35 @@ def promote_headings(text: str) -> str:
 
 
 def find_slug_for_chapter(chapter_num: int) -> str | None:
-    """Reuse icm-text/{n}-{slug}/ folder name if one already exists upstream."""
+    """Reuse icm-text/{n}-{slug}/ folder name if one already exists upstream.
+
+    Matched numerically so zero-padded folder names (08-dft) work too.
+    """
     if not SOURCE.exists():
         return None
-    prefix = f"{chapter_num}-"
     for p in SOURCE.iterdir():
-        if p.is_dir() and p.name.startswith(prefix):
+        m = CHAPTER_FOLDER_RE.match(p.name)
+        if p.is_dir() and m and int(m.group(1)) == chapter_num:
             return p.name
     return None
+
+
+# Inverse of split_chapters.rewrite_chapter_links: flattened ../ch{nn}/
+# index-page links go back to the upstream {n}-{slug}/ folder form so the
+# merged tree diffs cleanly against icm-text. Unresolvable numbers are
+# left alone (the forward rewrite ignores ../ch{nn} forms, so the
+# round-trip stays byte-identical either way).
+CHAPTER_LINK_INDEX_RE = re.compile(r"\]\(\.\./ch(\d{2})/index\.md(#[^)]*)?\)")
+
+
+def restore_chapter_links(text: str) -> str:
+    def repl(m):
+        slug = find_slug_for_chapter(int(m.group(1)))
+        if slug is None:
+            return m.group(0)
+        return f"](../{slug}{m.group(2) or ''})"
+
+    return CHAPTER_LINK_INDEX_RE.sub(repl, text)
 
 
 def slugify(text: str) -> str:
@@ -161,7 +183,7 @@ def merge_chapter(content_chapter: Path, out_root: Path) -> dict:
         parts.append(f"\n## {sec_title}\n")
         if sec_body:
             parts.append(f"\n{sec_body}\n")
-    merged_text = "".join(parts)
+    merged_text = restore_chapter_links("".join(parts))
 
     slug = find_slug_for_chapter(chapter_num) or f"{chapter_num}-{slugify(title)}"
     out_dir = out_root / slug

@@ -760,6 +760,36 @@
       'if "__file__" not in globals():',
       '    __file__ = _os.path.join(_os.getcwd(), "code", "inlined_script.py")'
     );
+    // Data files the page's code reads by relative path (./assets/... after
+    // the splitter's rewrite) don't exist in the kernel's in-memory FS.
+    // Fetch each one a code cell mentions and write it at that exact
+    // relative path — the kernel CWD is the same for setup and user cells,
+    // so open()/pq.Audio.from_file() then just work. A 404 or fetch error
+    // only skips that file; the cell fails with the same FileNotFoundError
+    // it would have raised anyway.
+    var assetRefs = pageCode.match(/\.\/(?:assets|code|figures)\/[\w.\-/]+/g) || [];
+    var seenRefs = new Set();
+    assetRefs = assetRefs.filter(function (rel) {
+      if (seenRefs.has(rel)) return false;
+      seenRefs.add(rel);
+      return true;
+    });
+    if (assetRefs.length) {
+      lines.push("from pyodide.http import pyfetch as _icm_pyfetch");
+      assetRefs.forEach(function (rel) {
+        var url = new URL(rel, document.baseURI).href;
+        lines.push(
+          "try:",
+          "    _r = await _icm_pyfetch(" + JSON.stringify(url) + ")",
+          "    if _r.status == 200:",
+          "        _os.makedirs(_os.path.dirname(" + JSON.stringify(rel) + '), exist_ok=True)',
+          "        _b = await _r.bytes()",
+          "        open(" + JSON.stringify(rel) + ', "wb").write(_b)',
+          "except Exception as _e:",
+          '    print("[icm] asset prefetch failed:", ' + JSON.stringify(rel) + ", _e)"
+        );
+      });
+    }
     var fut = sessionRef.kernel.requestExecute({ code: lines.join("\n") });
     var kernelErr = null;
     fut.onIOPub = function (m) {

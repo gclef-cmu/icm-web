@@ -21,10 +21,15 @@ execute:
   # Manim pages render several clips per notebook and CI runners are slow;
   # 180s was too tight.
   timeout: 600
-  # Run each notebook in a temp dir: the repo's `pyquist/` and
+  # Run notebooks in a temp dir by default: the repo's `pyquist/` and
   # `content/pyquist/` directories shadow the installed pyquist package when
-  # they're the execution CWD, breaking `import pyquist` at build time. The
-  # notebooks read no files by relative path, so temp execution is safe.
+  # they're the execution CWD, breaking `import pyquist` at build time —
+  # this still protects content/template-notebook.ipynb, which runs from
+  # content/. Section notebooks emitted by `make split` override this per
+  # file (metadata mystnb.execution_in_temp: false) so they execute from
+  # their own content/chNN/ dir and can read ./assets/ at build time.
+  # Corollary: a chapter dir must never gain a subdir named like an
+  # imported package.
   run_in_temp: true
 
 #######################################################################################

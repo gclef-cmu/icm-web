@@ -10,7 +10,9 @@ manim ``Scene``s ending with ``icm_anim.show(...)``, baked into the page as
 bare looping ``<video>`` elements. Normally ``tools/split_chapters.py``
 expands the directive into notebook cells before Sphinx sees the page; this
 Sphinx directive is only a fallback that validates the argument, warns, and
-renders nothing — the warning is a tripwire for a splitter regression.
+renders nothing — the warning is a tripwire for a splitter regression. No
+cell source is ever emitted here, so the ../assets/ path rewrite lives only
+in the splitter and _ext/icm_interactive.py.
 """
 from __future__ import annotations
 

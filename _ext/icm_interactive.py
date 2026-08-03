@@ -52,6 +52,23 @@ def cell_visibility(source: str) -> str:
     return "show"
 
 
+# Companion notebooks reference chapter data as ../assets/ etc., correct from
+# their notebooks/ dir; embedding hoists their cells up next to the page, so
+# those prefixes become page-relative ./assets/ etc. Kept in lockstep with
+# tools/split_chapters.py.
+FLATTEN_PATH_REWRITES = (
+    ("../assets/", "./assets/"),
+    ("../code/", "./code/"),
+    ("../figures/", "./figures/"),
+)
+
+
+def rewrite_flattened_paths(source: str) -> str:
+    for old, new in FLATTEN_PATH_REWRITES:
+        source = source.replace(old, new)
+    return source
+
+
 class InteractiveDirective(Directive):
     """``:::{interactive}[notebooks/foo.ipynb]`` — embed a runnable notebook in the page."""
 
@@ -84,10 +101,11 @@ class InteractiveDirective(Directive):
         for c in nb.cells:
             if c.cell_type == "markdown":
                 container = nodes.container()
-                self.state.nested_parse(StringList(c.source.splitlines()), 0, container)
+                source = rewrite_flattened_paths(c.source)
+                self.state.nested_parse(StringList(source.splitlines()), 0, container)
                 out += container.children
             elif c.cell_type == "code":
-                code = c.source
+                code = rewrite_flattened_paths(c.source)
                 if cell_visibility(code) != "show" or not code.strip():
                     continue
                 block = nodes.literal_block(code, code)

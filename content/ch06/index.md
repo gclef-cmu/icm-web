@@ -2,9 +2,9 @@
 
 In this chapter we explore {vocab}`modulation synthesis`, a family of techniques for synthesizing richer and more dynamic musical sounds than the methods we have studied so far.
 
-The word _modulation_ here means **affecting a property of one signal with another signal**. We have already seen this idea twice without naming it: multiplying a tone by an envelope ([Chapter 4](../04-score-timbre)) modulates its amplitude, and multiplying a signal by a complex sinusoid inside the Fourier transform ([Chapter 5](../05-frequency-domain)) modulates it to measure frequency content. Here, both of the signals involved will themselves be oscillating sinusoids.
+The word _modulation_ here means **affecting a property of one signal with another signal**. We have already seen this idea twice without naming it: multiplying a tone by an envelope ([Chapter 4](../ch04/index.md)) modulates its amplitude, and multiplying a signal by a complex sinusoid inside the Fourier transform ([Chapter 5](../ch05/index.md)) modulates it to measure frequency content. Here, both of the signals involved will themselves be oscillating sinusoids.
 
-When we studied additive synthesis ([Chapter 3](../03-additive-synthesis)), we saw that richer frequency-domain spectra ([Chapter 5](../05-frequency-domain)) give rise to more interesting musical material. Wavetable synthesis lets us synthesize rich _static_ spectra efficiently. But real musical sounds are not static. Their character changes _dynamically over time_, and often in a periodic fashion:
+When we studied additive synthesis ([Chapter 3](../ch03/index.md)), we saw that richer frequency-domain spectra ([Chapter 5](../ch05/index.md)) give rise to more interesting musical material. Wavetable synthesis lets us synthesize rich _static_ spectra efficiently. But real musical sounds are not static. Their character changes _dynamically over time_, and often in a periodic fashion:
 
 :::{audio-figure}
 {audio}`Cello, tremolo <./assets/audio-cello-tremolo.wav>` ![Spectrogram of a cello tremolo: a stack of harmonics whose energy pulses up and down over time.](./assets/fig-spec-cello.png)

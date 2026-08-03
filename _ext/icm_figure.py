@@ -19,9 +19,10 @@ from sphinx.application import Sphinx
 from sphinx.directives.patches import Figure  # Sphinx's Figure: adds :name:/numfig
 
 # The simple form's image line: ``![alt](path)`` or upstream's
-# ``:figure![alt](path)``.
+# ``:figure![alt](path)``. The alt match is greedy so it tolerates square
+# brackets inside the text (e.g. "on [a,b]").
 _IMAGE_RE = re.compile(
-    r"^\s*(?::figure)?!\[(?P<alt>[^\]]*)\]\(\s*(?P<path>\S+?)\s*\)\s*$"
+    r"^\s*(?::figure)?!\[(?P<alt>.*)\]\(\s*(?P<path>\S+?)\s*\)\s*$"
 )
 
 

@@ -62,6 +62,38 @@ def parse_directive_arg(arg: str) -> str:
     return arg
 
 
+# Companion notebooks reference chapter data as ../assets/ etc., correct
+# from their notebooks/ dir; flattening hoists their cells one level up,
+# so those prefixes become chapter-root ./assets/ etc. Kept in lockstep
+# with _ext/icm_interactive.py.
+FLATTEN_PATH_REWRITES = (
+    ("../assets/", "./assets/"),
+    ("../code/", "./code/"),
+    ("../figures/", "./figures/"),
+)
+
+
+def rewrite_flattened_paths(source: str) -> str:
+    for old, new in FLATTEN_PATH_REWRITES:
+        source = source.replace(old, new)
+    return source
+
+
+# Cross-chapter links are authored against the icm-text layout, where
+# chapters are sibling {n}-{slug}/ folders. Flattening renames those to
+# content/ch{nn}/, so link targets are rewritten to the chapter's index
+# page, which Sphinx can resolve. tools/merge_chapters.py applies the
+# exact inverse when reconstructing chapters for upstream PRs.
+CHAPTER_LINK_RE = re.compile(r"\]\(\.\./(\d+)-[\w-]+(#[^)]*)?\)")
+
+
+def rewrite_chapter_links(text: str) -> str:
+    def repl(m):
+        return f"](../ch{int(m.group(1)):02d}/index.md{m.group(2) or ''})"
+
+    return CHAPTER_LINK_RE.sub(repl, text)
+
+
 def section_directives(text: str):
     """All directives in section text, as (open_idx, close_idx, kind, path).
 
@@ -154,7 +186,9 @@ def build_section_notebook(
     The section text is segmented at each directive: the prose around them
     becomes Markdown cells, and each directive expands to the referenced
     notebook's cells (see add_notebook). Cells are not ``skip-execution``, so
-    the build bakes their output into the page.
+    the build bakes their output into the page. The notebook is stamped to
+    execute with its own directory as CWD (not the global run_in_temp temp
+    dir) so rewritten ./assets/ paths resolve at build time.
 
     Cell ids derive from chapter/section/ordinal, keeping the output
     byte-for-byte deterministic — tools/merge_chapters.py relies on that for
@@ -181,6 +215,10 @@ def build_section_notebook(
     def add_notebook(src: Path, rel: str, kind: str, group: int) -> None:
         """Expand a companion notebook in place as section cells.
 
+        Cell sources are copied with ../assets|code|figures/ rewritten to
+        ./… (rewrite_flattened_paths), since flattening hoists the cells
+        out of notebooks/ into the chapter root.
+
         ``{interactive}`` code cells stay runnable. The `# hide` marker maps
         to our ``icm-hide-input`` tag (CSS-hidden but still in the DOM, so
         the live run chain can execute it — myst-nb's ``remove-input`` would
@@ -194,28 +232,29 @@ def build_section_notebook(
         """
         nonlocal k
         for c in nbformat.read(str(src), as_version=4).cells:
+            source = rewrite_flattened_paths(c.source)
             meta = {kind: {"path": rel}}
             if c.cell_type == "markdown":
-                cell = new_markdown_cell(c.source)
+                cell = new_markdown_cell(source)
                 cell["id"] = f"{base}m{k}"
                 cell["metadata"] = meta
                 cells.append(cell)
                 k += 1
             elif c.cell_type == "code":
-                cc = new_code_cell(c.source)
+                cc = new_code_cell(source)
                 cc["id"] = f"{base}c{k}"
                 if kind == "animation":
                     tags = ["icm-hide-input", "disable-execution-cell"]
                 else:
-                    visibility = cell_visibility(c.source)
+                    visibility = cell_visibility(source)
                     tags = [f"icm-run-group-{group}"]
                     if visibility == "hide":
                         tags.append("icm-hide-input")
                     elif visibility == "collapse":
                         tags.append("hide-input")
-                    if cell_no_output(c.source):
+                    if cell_no_output(source):
                         tags.append("remove-output")
-                    if cell_autorun(c.source):
+                    if cell_autorun(source):
                         tags.append("icm-autorun")
                 meta["tags"] = tags
                 cc["metadata"] = meta
@@ -243,6 +282,10 @@ def build_section_notebook(
             "name": "python3",
         },
         "language_info": {"name": "python"},
+        # myst-nb file-level override: execute with CWD = the notebook's own
+        # content/chNN/ dir so ./assets/ paths resolve; safe because chapter
+        # dirs never contain a pyquist/ child (see run_in_temp in _config.yml).
+        "mystnb": {"execution_in_temp": False},
     }
     nb["nbformat"] = 4
     nb["nbformat_minor"] = 5
@@ -339,7 +382,7 @@ def split_chapter(folder: Path) -> dict | None:
         return None
 
     raw = src.read_text()
-    body = FRONTMATTER_RE.sub("", raw, count=1)
+    body = rewrite_chapter_links(FRONTMATTER_RE.sub("", raw, count=1))
     intro_lines, sections = split_body(body)
 
     # Chapter title = the first `# ` heading in the intro block.
