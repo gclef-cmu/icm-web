@@ -149,6 +149,20 @@ parts:
           - file: content/ch08/08
           - file: content/ch08/09
       - file: content/ch09/index
+        sections:
+          - file: content/ch09/00
+          - file: content/ch09/01
+          - file: content/ch09/02
+          - file: content/ch09/03
+          - file: content/ch09/04
+          - file: content/ch09/05
+          - file: content/ch09/06
+          - file: content/ch09/07
+          - file: content/ch09/08
+          - file: content/ch09/09
+          - file: content/ch09/10
+          - file: content/ch09/11
+          - file: content/ch09/12
       - file: content/ch10/index
       - file: content/ch11/index
       - file: content/ch12/index

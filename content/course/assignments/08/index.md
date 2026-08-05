@@ -7,11 +7,11 @@ instructions and policies on the [Assignments page](../index.md) before you begi
 
 **Pick _one_ of the open-ended directions below.**
 
-- [Direction 1 (Creative): A 30-60s Song with a Real-World Impulse Response](./1-creative.md)
+- [Direction 1 (Creative): A 30-60s Song from the Best Impulse Responses on Campus](./1-creative.md)
 - [Direction 2 (Technical): Analog Resurrection](./2-technical.md)
 - [Direction 3 (Technical): Bending Time](./3-technical.md)
 
-This assignment allows AI and rewards your own creativity. The technical directions each come with a **starter notebook** that guides you through the topic — treat it as a guide, not a contract. You are free to adjust it or depart from it, and you do not submit the notebook itself; you submit the standard open-ended format below.
+This assignment allows AI and rewards your own creativity. The technical directions each come with a **starter notebook** that guides you through the topic; treat it as a guide, not a contract. You are free to adjust it or depart from it, and you do not submit the notebook itself; you submit the standard open-ended format below.
 
 ## Submission
 
