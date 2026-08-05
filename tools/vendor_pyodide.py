@@ -36,6 +36,9 @@ ROOTS = [
     "numpy", "matplotlib", "soxr", "requests", "tqdm",
     "micropip", "packaging", "ssl", "sqlite3",
     "ipython", "matplotlib-inline",
+    # Not preloaded by the bootstrap: the kernel auto-loads these from the
+    # vendored distribution when a cell imports them.
+    "scipy",
 ]
 
 

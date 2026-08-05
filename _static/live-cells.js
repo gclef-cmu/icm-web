@@ -750,6 +750,38 @@
       // moment" stderr lands here instead of in the first cell's output.
       "import matplotlib.font_manager"
     );
+    // Students copy `!pip install x` from the wider internet, but WASM has
+    // no shell — the raw result is a bare OSError. Rewrite !pip installs
+    // to micropip (works for pure-Python wheels and anything vendored),
+    // and give every other !command a plain explanation.
+    lines.push(
+      "async def _icm_pip_install(_spec):",
+      "    import shlex, micropip",
+      '    _pkgs = [_a for _a in shlex.split(_spec) if not _a.startswith("-")]',
+      "    if not _pkgs:",
+      '        raise OSError("usage: !pip install <package>")',
+      "    try:",
+      "        await micropip.install(_pkgs)",
+      '        print("Installed:", ", ".join(_pkgs))',
+      "    except Exception as _e:",
+      '        raise OSError(", ".join(_pkgs) + " is not installable in the browser kernel (pure-Python packages only). Ask course staff to add it to the book.") from None',
+      '_icm_shell_msg = "{0} does not work here: the browser kernel has no shell. To add packages, use !pip install <name>."',
+      "def _icm_no_shell(_lines):",
+      "    _out = []",
+      "    for _l in _lines:",
+      "        _s = _l.lstrip()",
+      '        if not _s.startswith("!"):',
+      "            _out.append(_l); continue",
+      "        _ind = _l[: len(_l) - len(_s)]",
+      "        _cmd = _s[1:].strip()",
+      "        _p = _cmd.split()",
+      '        if _p and _p[0] in ("pip", "pip3") and len(_p) > 1 and _p[1] == "install":',
+      '            _out.append(_ind + "await _icm_pip_install({0!r})\\n".format(_cmd.split("install", 1)[1].strip()))',
+      "        else:",
+      '            _out.append(_ind + "raise OSError(_icm_shell_msg.format({0!r}))\\n".format("!" + (_p[0] if _p else "")))',
+      "    return _out",
+      "get_ipython().input_transformers_cleanup.append(_icm_no_shell)"
+    );
     // The inlined chapter scripts locate their output folder via __file__,
     // which a notebook cell doesn't have — they'd NameError on Run. Define
     // one under the kernel's CWD so their WAV writes land harmlessly in the

@@ -510,11 +510,42 @@ def stamp(cx: float, cy: float, scale: float = 1.0) -> str:
     return "".join(parts)
 
 
-def poster_svg(figure_bodies: dict[str, str]) -> str:
+def fourier_band(y_top: float, y_bottom: float) -> str:
+    """Fourier series convergence: ridge N is the N-term partial sum of a
+    square wave, morphing from a pure sine (back) to the square (front, red)."""
+    n_sums, cycles, scale, step = 15, 2, 55, 15
+    u = np.linspace(0, 1, 900)
+    xs = M + u * (W - 2 * M)
+    term = lambda n: (4 / np.pi) * np.sin(2 * np.pi * cycles * (2 * n - 1) * u) / (2 * n - 1)
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 {W} {H}" '
+        latex_image(r"x_N(t)=\frac{4}{\pi}\sum_{n=1}^{N}\frac{\sin\bigl(2\pi(2n-1)f_0 t\bigr)}{2n-1}", M, y_top + 2, 620, 52),
+        svg_text(W - M, y_top + 8, "SQUARE WAVE PARTIAL SUMS · N = 1 TO 15", size=26, fill=GRAY, anchor="end", family=MONO),
+    ]
+    partial = np.zeros_like(u)
+    curves = []
+    for n in range(1, n_sums + 1):
+        partial = partial + term(n)
+        curves.append(partial.copy())
+    for j, partial in enumerate(curves, start=1):
+        center = y_top + 132 + (j - 1) * step
+        curve = list(zip(xs, center - partial * scale))
+        if j < n_sums:
+            parts.append(polygon([(xs[0], center + 74), *curve, (xs[-1], center + 74)], fill=PAPER))
+            parts.append(polyline(curve, stroke=INK, width=2))
+        else:
+            parts.append(polygon([(xs[0], y_bottom), *curve, (xs[-1], y_bottom)], fill=PAPER))
+            parts.append(polyline(curve, stroke=RED, width=3))
+    return "".join(parts)
+
+
+def poster_svg(figure_bodies: dict[str, str], tabloid: bool = False) -> str:
+    # Tabloid keeps the letter coordinate width; 11x17 aspect gives 2550 x 3941.
+    page_h = 3941 if tabloid else H
+    page_size = ("11in", "17in") if tabloid else ("8.5in", "11in")
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{page_size[0]}" height="{page_size[1]}" viewBox="0 0 {W} {page_h}" '
         f'role="img" aria-label="Fall 2026 Introduction to Computer Music course poster">',
-        rect(0, 0, W, H, fill=PAPER),
+        rect(0, 0, W, page_h, fill=PAPER),
     ]
     # Masthead.
     parts.extend([
@@ -542,6 +573,11 @@ def poster_svg(figure_bodies: dict[str, str]) -> str:
         python_logo(1740, 1163, 250),
         stamp(2160, 1156, 0.885),
     ])
+    # On tabloid, the extra page height opens with a full-width Fourier-series
+    # band between the hero and the logistics strip; later sections shift down.
+    dy = 512 if tabloid else 0
+    if tabloid:
+        parts.append(fourier_band(1395, 1825))
     # Logistics strip.  Vertical dividers share the card-gutter axis of the grid
     # below; icon + text groups are centered from probe-measured text widths.
     gap = 48
@@ -549,11 +585,11 @@ def poster_svg(figure_bodies: dict[str, str]) -> str:
     divider_xs = [M + card_w + gap / 2, M + 2 * card_w + 1.5 * gap]
     edges = [M, *divider_xs, W - M]
     centers = [(edges[i] + edges[i + 1]) / 2 for i in range(3)]
-    parts.append(line(M, 1368, W - M, 1368, width=3))
-    parts.append(line(M, 1600, W - M, 1600, width=3))
+    parts.append(line(M, 1368 + dy, W - M, 1368 + dy, width=3))
+    parts.append(line(M, 1600 + dy, W - M, 1600 + dy, width=3))
     for dx in divider_xs:
-        parts.append(line(dx, 1398, dx, 1570, stroke=SCAFFOLD, width=2.4))
-    icy = 1490
+        parts.append(line(dx, 1398 + dy, dx, 1570 + dy, stroke=SCAFFOLD, width=2.4))
+    icy = 1490 + dy
     # Calendar icon + days/time.
     cal_x = 245
     parts.extend([
@@ -563,8 +599,8 @@ def poster_svg(figure_bodies: dict[str, str]) -> str:
         line(cal_x - 40, icy - 8, cal_x + 40, icy - 8, stroke=RED, width=5),
         rect(cal_x - 22, icy + 4, 11, 11, fill=RED), rect(cal_x - 5, icy + 4, 11, 11, fill=RED), rect(cal_x + 12, icy + 4, 11, 11, fill=RED),
         rect(cal_x - 22, icy + 20, 11, 11, fill=RED), rect(cal_x - 5, icy + 20, 11, 11, fill=RED),
-        svg_text(565, 1474, "TUE + THU", size=52, weight=700, anchor="middle"),
-        svg_text(565, 1538, "11:00 AM – 12:20 PM", size=52, weight=700, anchor="middle"),
+        svg_text(565, 1474 + dy, "TUE + THU", size=52, weight=700, anchor="middle"),
+        svg_text(565, 1538 + dy, "11:00 AM – 12:20 PM", size=52, weight=700, anchor="middle"),
     ])
     # Map-pin icon + room.
     pin_x = 1139
@@ -573,21 +609,22 @@ def poster_svg(figure_bodies: dict[str, str]) -> str:
         f'A 32 32 0 1 1 {pin_x + 32} {icy - 10} C {pin_x + 32} {icy + 8}, {pin_x + 12} {icy + 22}, {pin_x} {icy + 40} Z" '
         f'fill="none" stroke="{RED}" stroke-width="6.5" stroke-linejoin="round"/>',
         circle(pin_x, icy - 10, 10, fill=RED, stroke=RED),
-        svg_text(1331, 1512, "CIC 1203", size=58, weight=700, anchor="middle"),
+        svg_text(1331, 1512 + dy, "CIC 1203", size=58, weight=700, anchor="middle"),
     ])
     # Waveform icon + units.
     wav_x = 1810
     parts.extend([
         polyline([(wav_x - 42, icy), (wav_x - 26, icy), (wav_x - 16, icy - 28), (wav_x - 2, icy + 32),
                   (wav_x + 10, icy - 20), (wav_x + 20, icy), (wav_x + 42, icy)], stroke=RED, width=6.5),
-        svg_text(2097, 1474, "9 UNITS · 15-322", size=52, weight=700, anchor="middle"),
-        svg_text(2097, 1538, "12 UNITS · 15-622", size=52, weight=700, anchor="middle"),
+        svg_text(2097, 1474 + dy, "9 UNITS · 15-322", size=52, weight=700, anchor="middle"),
+        svg_text(2097, 1538 + dy, "12 UNITS · 15-622", size=52, weight=700, anchor="middle"),
     ])
     # Section header.
+    dyh = 522 if tabloid else 0
     parts.extend([
-        line(M, 1688, W / 2 - 470, 1688, stroke=RED, width=4),
-        line(W / 2 + 470, 1688, W - M, 1688, stroke=RED, width=4),
-        svg_text(W / 2, 1712, "WHAT YOU’LL LEARN", size=76, weight=900, fill=RED, anchor="middle", condensed=True, spacing=8),
+        line(M, 1688 + dyh, W / 2 - 470, 1688 + dyh, stroke=RED, width=4),
+        line(W / 2 + 470, 1688 + dyh, W - M, 1688 + dyh, stroke=RED, width=4),
+        svg_text(W / 2, 1712 + dyh, "WHAT YOU’LL LEARN", size=76, weight=900, fill=RED, anchor="middle", condensed=True, spacing=8),
     ])
     # Topic grid.
     cards = [
@@ -598,10 +635,10 @@ def poster_svg(figure_bodies: dict[str, str]) -> str:
         ("05", "ALGORITHMIC COMPOSITION", "MARKOV CHAINS · LPC · MIDI"),
         ("06", "REAL-TIME & MUSIC AI", "STREAMING · MIR · GENERATIVE MODELS"),
     ]
-    grid_y = 1764
+    grid_y = 2286 if tabloid else 1764
     fig_scale = card_w / FIG_W
     card_h = 168 + FIG_H * fig_scale
-    row_gap = 48
+    row_gap = 96 if tabloid else 48
     for index, ((num, title, keywords), (slug, _)) in enumerate(zip(cards, FIGURES)):
         row, col = divmod(index, 3)
         x = M + col * (card_w + gap)
@@ -617,7 +654,7 @@ def poster_svg(figure_bodies: dict[str, str]) -> str:
             "</g>",
         ])
     # Facts strip.
-    facts_y = grid_y + 2 * card_h + row_gap + 46
+    facts_y = grid_y + 2 * card_h + row_gap + (56 if tabloid else 46)
     parts.append(line(M, facts_y, W - M, facts_y, width=3))
     # Icon + text positions solved from measured text widths per column.
     facts_items = [
@@ -642,12 +679,13 @@ def poster_svg(figure_bodies: dict[str, str]) -> str:
             parts.append(svg_text(icx, icy + 44, "\U0001D11E", size=180, fill=RED, anchor="middle", family="Apple Symbols"))
         parts.append(svg_text(tcx, facts_y + 70, a, size=36, weight=700, anchor="middle"))
         parts.append(svg_text(tcx, facts_y + 128, b, size=36, weight=700, anchor="middle"))
-    # Footer.  Text baselines keep ~6.5 mm clear of the trim edge for office printers.
-    footer_y = 3110
+    # Footer.  Text baselines keep well clear of the trim edge for office printers.
+    footer_y = 3712 if tabloid else 3110
+    base_a, base_b = (130, 134) if tabloid else (108, 112)
     parts.extend([
-        rect(0, footer_y, W, H - footer_y, fill=RED),
-        svg_text(M, footer_y + 108, "INSTRUCTOR · CHRIS DONAHUE", size=52, weight=700, fill=WHITE, spacing=2),
-        svg_text(W - M, footer_y + 112, "CARNEGIE MELLON UNIVERSITY", size=72, weight=900, fill=WHITE, anchor="end", condensed=True, spacing=3),
+        rect(0, footer_y, W, page_h - footer_y, fill=RED),
+        svg_text(M, footer_y + base_a, "INSTRUCTOR · CHRIS DONAHUE", size=52, weight=700, fill=WHITE, spacing=2),
+        svg_text(W - M, footer_y + base_b, "CARNEGIE MELLON UNIVERSITY", size=72, weight=900, fill=WHITE, anchor="end", condensed=True, spacing=3),
     ])
     parts.append("</svg>")
     return "\n".join(parts)
@@ -686,10 +724,29 @@ def main() -> None:
     print_pdf_path = print_stem.with_suffix(".pdf")
     print_svg_path.write_text(svg.replace(PAPER, "#ffffff"), encoding="utf-8")
     subprocess.run(["rsvg-convert", "-f", "pdf", str(print_svg_path), "-o", str(print_pdf_path)], check=True)
+
+    # 11x17 tabloid variant with its own layout, plus its print version.
+    tab_stem = POSTER_STEM.parent / (POSTER_STEM.name + "-11x17")
+    tab_svg_path = tab_stem.with_suffix(".svg")
+    tab_png_path = tab_stem.with_suffix(".png")
+    tab_pdf_path = tab_stem.with_suffix(".pdf")
+    tab_svg = poster_svg(figure_bodies, tabloid=True)
+    tab_svg_path.write_text(tab_svg, encoding="utf-8")
+    render_svg(tab_svg_path, tab_png_path, 3300)
+    subprocess.run(["rsvg-convert", "-f", "pdf", str(tab_svg_path), "-o", str(tab_pdf_path)], check=True)
+    tab_print_stem = POSTER_STEM.parent / (POSTER_STEM.name + "-11x17-print")
+    tab_print_svg = tab_print_stem.with_suffix(".svg")
+    tab_print_pdf = tab_print_stem.with_suffix(".pdf")
+    tab_print_svg.write_text(tab_svg.replace(PAPER, "#ffffff"), encoding="utf-8")
+    subprocess.run(["rsvg-convert", "-f", "pdf", str(tab_print_svg), "-o", str(tab_print_pdf)], check=True)
     print(poster_svg_path)
     print(poster_png_path)
     print(poster_pdf_path)
     print(print_pdf_path)
+    print(tab_svg_path)
+    print(tab_png_path)
+    print(tab_pdf_path)
+    print(tab_print_pdf)
 
 
 if __name__ == "__main__":

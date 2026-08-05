@@ -14,7 +14,7 @@
   --cmu-red-bright: #e8546a;  /* lightened red, legible on dark surfaces */
   --cmu-gold:       #fdb515;  /* secondary accent                        */
   --cmu-iron:       #6d6e71;  /* iron gray — neutral                     */
-  --cmu-teal:       #008996;  /* CMU secondary palette — exercise accent */
+  --cmu-teal:       #008996;  /* CMU secondary palette — important accent */
   --cmu-teal-bright:#3fb6c2;  /* lightened teal, legible on dark surfaces */
 
   /* Typography */
@@ -240,18 +240,18 @@ html[data-theme="dark"] {
    are custom properties so the rules below are written once.
    ---------------------------------------------------------------------- */
 html[data-theme="light"] {
-  --ad-note-bg:   #eaf0f6;  --ad-note-title:   #dde7f0;  --ad-note-spine:   #6a8aab;
-  --ad-tip-bg:    #ecf3e6;  --ad-tip-title:    #dde9d3;  --ad-tip-spine:    #6f9a5e;
-  --ad-imp-bg:    #f6e8ea;  --ad-imp-title:    #efd6da;  --ad-imp-spine:    #c41230;
-  --ad-warn-bg:   #fbe8e2;  --ad-warn-title:   #f4d3c9;  --ad-warn-spine:   #d6402a;
-  --ad-see-bg:    #efeaf3;  --ad-see-title:    #e3dbeb;  --ad-see-spine:    #8773a3;
+  --ad-note-bg:   #e7f0f8;  --ad-note-title:   #d4e4f4;  --ad-note-spine:   #467eb6;
+  --ad-tip-bg:    #f7eed8;  --ad-tip-title:    #f1e1b8;  --ad-tip-spine:    #cea116;
+  --ad-imp-bg:    #e4f2f2;  --ad-imp-title:    #cde8e9;  --ad-imp-spine:    #0a8b91;
+  --ad-warn-bg:   #f8ebe9;  --ad-warn-title:   #f4dcd7;  --ad-warn-spine:   #d1402f;
+  --ad-see-bg:    #f1ecf7;  --ad-see-title:    #e7ddf1;  --ad-see-spine:    #8b69ab;
 }
 html[data-theme="dark"] {
-  --ad-note-bg:   #1b2630;  --ad-note-title:   #22303e;  --ad-note-spine:   #7ea0c0;
-  --ad-tip-bg:    #1f271c;  --ad-tip-title:    #273323;  --ad-tip-spine:    #86b075;
-  --ad-imp-bg:    #2f2021;  --ad-imp-title:    #3d282a;  --ad-imp-spine:    #e8546a;
-  --ad-warn-bg:   #2f201d;  --ad-warn-title:   #3d2924;  --ad-warn-spine:   #ef6a4d;
-  --ad-see-bg:    #27222e;  --ad-see-title:    #322b3c;  --ad-see-spine:    #a895c0;
+  --ad-note-bg:   #1d2630;  --ad-note-title:   #24313f;  --ad-note-spine:   #76a9de;
+  --ad-tip-bg:    #2a2518;  --ad-tip-title:    #362f1d;  --ad-tip-spine:    #f5c84e;
+  --ad-imp-bg:    #17292a;  --ad-imp-title:    #1c3536;  --ad-imp-spine:    #3fb8be;
+  --ad-warn-bg:   #30211f;  --ad-warn-title:   #3e2a27;  --ad-warn-spine:   #f06d5b;
+  --ad-see-bg:    #28222e;  --ad-see-title:    #342c3c;  --ad-see-spine:    #b495d3;
 }
 
 .admonition.note      { --ad-bg: var(--ad-note-bg); --ad-title: var(--ad-note-title); --ad-spine: var(--ad-note-spine); }
