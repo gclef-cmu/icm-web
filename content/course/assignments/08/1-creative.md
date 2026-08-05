@@ -1,10 +1,16 @@
-# Direction 1 (Creative): A 30-60s Song from the Best Impulse Responses on Campus
+# Direction 1 (Creative): A Song from the Best Impulse Responses on Campus
 
-In Assignment 6 you learned how convolution, the Fourier transform, and filters let you reshape sound. Convolution in particular gives us **convolution reverb**: if you capture the _impulse response_ (IR) of a real acoustic space, you can convolve any audio with that IR to make it sound as though it were played in that space. In this direction you will hunt for the best-sounding spaces on campus, capture their impulse responses yourself, and build a 30-60s composition around them.
+In Assignment 6 you learned how convolution, the Fourier transform, and filters let you reshape sound. Convolution in particular gives us **convolution reverb**: if you capture the _impulse response_ (IR) of a real acoustic space, you can convolve any audio with that IR to make it sound as though it were played in that space. In this direction you will hunt for the best-sounding spaces on campus, capture their impulse responses yourself, and build a 30 to 60 second composition around them.
 
-Campus is full of acoustically distinctive spaces: stairwells, tunnels, parking garages, practice rooms, the dome under Baker Hall. Each one colors sound differently, and no plugin preset sounds quite like the real thing. Go find the ones worth keeping.
+Campus is full of acoustically distinctive spaces: stairwells, tunnels, parking garages, practice rooms, the dome under Baker Hall. Each one colors sound differently, and no plugin preset sounds quite like the real thing.
 
-**Capturing an IR.** There is no restriction on how you capture your impulse responses. The recommended method is a sharp, broadband impulse such as a hand clap or a balloon pop, recorded on whatever you have; even a phone works surprisingly well. You may instead use a sine sweep and deconvolve it into an IR, which yields a cleaner result, but be warned: doing a sweep justice requires serious hardware (a loud full-range speaker, a quality recorder, and a quiet space), so only go that route if you have the equipment. See the Assignment 6 notebook and [resources](../../resources/index.md) for guidance on turning a recording into a usable IR.
+:::{figure}
+![The vaulted hallway inside Baker Hall](./assets/baker-hall-hallway.jpg)
+
+The vaulted hallway in Baker Hall, a good candidate for an impulse response. Photo by Daderot, public domain.
+:::
+
+**Capturing an IR.** There is no restriction on how you capture your impulse responses. The recommended method is a sharp, broadband impulse such as a hand clap or a balloon pop, recorded on whatever you have; even a phone works surprisingly well. You may instead use a sine sweep and deconvolve it into an IR, which yields a cleaner result, but a good sweep measurement takes serious hardware (a loud full-range speaker, a quality recorder, and a quiet space), so only go that route if you have access to the equipment. See the Assignment 6 notebook and [resources](../../resources/index.md) for guidance on turning a recording into a usable IR.
 
 **Requirements**
 - Capture **more than one** impulse response **yourself**, from different spaces on campus (found or downloaded IRs do not count toward this requirement)
@@ -30,5 +36,5 @@ Need a good place to start?
 - Scout several spaces (a stairwell, a tunnel, a big empty hall) and capture an IR in each, then audition them on the same dry sound and keep the winners
 - Record several different excitations (clap, balloon, sweep) in one space and compare how their IRs color your sound
 - Contrast a dry, close sound against the same sound drenched in your most dramatic space
-- Treat your IRs as locations in a journey: move a melody from one space to another as the piece unfolds
+- Move a melody from one space to another as the piece unfolds
 - Use a filter to carve space for the reverb tail so your mix doesn't get muddy

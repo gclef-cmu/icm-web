@@ -63,6 +63,13 @@ git add content/ && git commit && git push
 directly and never fetch the private `icm-text/`. So after a split, commit the
 regenerated `content/` for changes to reach the deploy.
 
+`{animation}` clips render during the split, not the build: the splitter runs
+each changed companion under manim once and writes small crf-28 mp4s into
+`content/chNN/anim/` (commit those too). Unchanged clips are reused
+byte-for-byte via the content hash in their filenames, so a split only needs
+the authoring stack (`pip install manim==0.20.1 && pip install -e
+tools/icm_anim`, plus TeX for `MathTex`) when a scene actually changed.
+
 `make merge` is the inverse: it re-assembles `content/ch*/` into icm-text-shaped
 files (under `icm-text-merged/`) for PR'ing edits upstream, and self-checks that
 the rendered site is unchanged.
@@ -298,10 +305,11 @@ round-trips through video and update both definitions.
 Pushing to `main` triggers `.github/workflows/deploy-book.yml`, which builds and
 deploys to GitHub Pages. CI fetches only the public `pyquist/` submodule (over
 HTTPS) and builds from the committed `content/` — it never runs `make split` or
-fetches `icm-text/`. Because CI runs `make book`, the live-code artifacts
-(wheels, vendored thebe bundles from the npm registry) are built there too —
-nothing live-code-related is committed except the sources under `tools/` and
-`_static/`.
+fetches `icm-text/`, and it never renders animations (no manim or TeX Live in
+CI; the committed `content/**/anim/` mp4s are served as-is). Because CI runs
+`make book`, the live-code artifacts (wheels, vendored thebe bundles from the
+npm registry) are built there too — nothing live-code-related is committed
+except the sources under `tools/` and `_static/`.
 
 ## Layout
 

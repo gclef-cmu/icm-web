@@ -1,12 +1,18 @@
 # Direction 3 (Technical): Bending Time
 
-In 1958, Ross Bagdasarian sang into a tape recorder running at half speed, played the tape back at full speed, and sold millions of records as Alvin and the Chipmunks. That was the state of the art for changing the speed of audio: time and pitch were handcuffed together, and every tape deck, turntable, and sampler paid the same price. Slow a sound down and it sags an octave; speed it up and it squeaks.
+In 1958, Ross Bagdasarian sang into a tape recorder running at half speed, played the tape back at full speed, and sold millions of records as Alvin and the Chipmunks. That was the state of the art for changing the speed of audio: time and pitch came locked together, on every tape deck, turntable, and sampler. Slow a sound down and it drops an octave; speed it up and it squeaks.
 
-The tool that finally broke the handcuffs is the **phase vocoder**, invented at Bell Labs in 1966 by Flanagan and Golden. Today one hides behind your podcast app's speed slider, YouTube's playback menu, Ableton Live's warp engine, and half of the "slowed + reverb" remixes on the internet. In this direction you will build the real thing, small: cut a sound into overlapping frames with an STFT (as in Assignment 7), keep the phase of every frequency bin _continuous_ while you re-space the frames in time, and splice the sound back together at a new speed: same pitch, new duration.
+The tool that finally separated them is the **phase vocoder**, invented at Bell Labs in 1966 by Flanagan and Golden. There is one behind your podcast app's speed slider, YouTube's playback menu, Ableton Live's warp engine, and half of the "slowed + reverb" remixes on the internet. In this direction you will build a small but real one: cut a sound into overlapping frames with an STFT (as in Assignment 7), keep the phase of every frequency bin _continuous_ while you re-space the frames in time, and splice the sound back together at a new speed, with the pitch unchanged.
 
-**[Download the starter notebook](./assets/08-bending-time/starter.zip)**. It provides the story, step-by-step guidance and a checkpoint for every task, all the formulas you need, verification scaffolding, and listening tests on both a synthetic tune and real audio.
+:::{figure}
+![The YouTube player with the playback speed menu open](./assets/youtube-speed-menu.jpg)
 
-The starter notebook is a guide, not a contract. It shows one good path through the topic, but this is an open-ended assignment: you may adjust the notebook, restructure it, or go beyond it as your own ideas take over; AI is allowed, and creativity is encouraged. **You do not submit the notebook.** Your deliverables are the standard open-ended technical format (demo video, `TECHNICAL.md`, and `src/`) described on the [Assignments page](../index.md#open-ended-submission-instructions-and-policies).
+The playback speed menu on Me at the zoo, the first video ever uploaded to YouTube. A phase vocoder does the work behind that slider.
+:::
+
+**[Download the starter notebook](./assets/08-bending-time/starter.zip)**. It contains step-by-step guidance with a checkpoint for every task, all the formulas you need, verification scaffolding, and listening tests on both a synthetic tune and real audio.
+
+The notebook shows one good path through the topic, but this is an open-ended assignment: feel free to adjust it, restructure it, or leave it behind once you have ideas of your own. AI is allowed, and creativity is encouraged. **You do not submit the notebook.** Your deliverables are the standard open-ended technical format (demo video, `TECHNICAL.md`, and `src/`) described on the [Assignments page](../index.md#open-ended-submission-instructions-and-policies).
 
 **Requirements**
 - Implement your own `stft` and `istft`: analysis into overlapping windowed frames, and resynthesis by **overlap-add** with proper window compensation, so that the round trip reconstructs the signal at **any** hop size (the notebook walks you through the recipe)

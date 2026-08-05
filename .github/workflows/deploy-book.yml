@@ -45,21 +45,17 @@ jobs:
       - name: Install PortAudio (system dep of sounddevice)
         run: sudo apt-get update && sudo apt-get install -y libportaudio2
 
-      # Manim's MathTex shells out to latex/dvisvgm ({animation} clips).
-      # Video encoding uses manim's bundled PyAV, so no ffmpeg.
-      - name: Install TeX Live (manim MathTex dep)
-        run: sudo apt-get install -y texlive texlive-latex-extra dvisvgm
-
-      # ManimPango publishes no Linux wheels, so pip compiles it from source
-      # here — it needs the pango headers.
-      - name: Install Pango headers (manimpango source build)
-        run: sudo apt-get install -y libpango1.0-dev pkg-config
+      # No manim/TeX Live/pango here on purpose: {animation} clips are
+      # pre-rendered at `make split` time and committed under
+      # content/**/anim/ — the build just serves those files.
 
       # Persist the jupyter-cache so a push only executes the notebooks it
       # changed. jupyter-cache invalidates per-notebook by content hash; the
       # KEY busts only when the execution environment changes (stale outputs
       # from an old environment would otherwise be served forever). The sha
       # suffix saves an updated cache each run.
+      # NOTE: inert under execute_notebooks 'auto' (myst-nb only writes
+      # _build/.jupyter_cache in 'cache' mode); kept for a future switch.
       - name: Restore notebook execution cache
         uses: actions/cache@v4
         with:

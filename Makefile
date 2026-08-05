@@ -9,6 +9,9 @@ all: book
 # Pull the latest prose from the icm-text submodule into per-section files
 # under content/ch{nn}/ (bump the submodule first to advance the pin). Also
 # mirrors icm-f26/ into content/course/ and refs.bib into content/references.bib.
+# {animation} clips render HERE, into committed content/chNN/anim/*.mp4 —
+# unchanged clips are reused byte-identically; new or edited scenes need manim
+# and icm_anim importable. Commit the mp4s with the regenerated pages.
 # WARNING: wipes content/ch*/ and content/course/ entirely, dropping any local
 # styling overrides — review with `git diff content/` afterwards.
 split:
@@ -24,27 +27,14 @@ merge:
 # performs for chapters. Edit the sources, then re-run this. Untouched by
 # `make split`.
 template-interactive:
-	@python3 -c "import sys; sys.path.insert(0, 'tools'); \
-	from pathlib import Path; \
-	import nbformat; \
-	from split_chapters import build_section_notebook; \
-	folder = Path('content/template-interactive'); \
-	nb = build_section_notebook((folder / 'main.md').read_text(), folder, 99, 0); \
-	nbformat.write(nb, str(folder / 'index.ipynb')); \
-	print('wrote', folder / 'index.ipynb')"
+	@python3 tools/split_chapters.py --page content/template-interactive --chapter 99 --section 0
 
 # Regenerate the "Template - Animation" page — same model as above, with
-# manim companions in notebooks/. sec_index=1 keeps its cell ids (ch99s01…)
-# clear of template-interactive's (ch99s00…). Untouched by `make split`.
+# manim companions in notebooks/ pre-rendered into anim/ (commit those mp4s
+# too). sec_index=1 keeps its cell ids (ch99s01…) clear of
+# template-interactive's (ch99s00…). Untouched by `make split`.
 template-animation:
-	@python3 -c "import sys; sys.path.insert(0, 'tools'); \
-	from pathlib import Path; \
-	import nbformat; \
-	from split_chapters import build_section_notebook; \
-	folder = Path('content/template-animation'); \
-	nb = build_section_notebook((folder / 'main.md').read_text(), folder, 99, 1); \
-	nbformat.write(nb, str(folder / 'index.ipynb')); \
-	print('wrote', folder / 'index.ipynb')"
+	@python3 tools/split_chapters.py --page content/template-animation --chapter 99 --section 1
 
 # Mirror the Pyquist README from the pinned submodule; runs on every
 # `make book`. The sed step rewrites `examples/…` relative links to absolute
@@ -167,9 +157,11 @@ book: check-thebe-fork sync-pyquist-readme wheels vendor-thebe vendor-pyodide
 	@# baked %pip cell output. ICM_BOOK_BUILD: kernel-only preview cells
 	@# guard on this and build nothing.
 	PIP_DISABLE_PIP_VERSION_CHECK=1 ICM_BOOK_BUILD=1 jupyter-book build ./
-	@# Sphinx doesn't track files referenced by raw <img>/<audio> HTML tags,
-	@# so copy each chapter's assets folder into the build output ourselves.
-	@for d in content/ch*/assets; do \
+	@# Sphinx doesn't track files referenced by raw <img>/<audio>/<video>
+	@# HTML tags, so copy each chapter's assets and pre-rendered anim clips
+	@# into the build output ourselves.
+	@for d in content/ch*/assets content/ch*/anim content/template-animation/anim; do \
+		[ -d "$$d" ] || continue; \
 		dest="_build/html/$$(dirname $$d)"; \
 		mkdir -p "$$dest"; \
 		cp -R "$$d" "$$dest/"; \

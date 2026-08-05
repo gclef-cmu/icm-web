@@ -18,9 +18,10 @@ only_build_toc_files: true
 # Execution settings ('auto' executes any notebook that is missing outputs)
 execute:
   execute_notebooks: 'auto'
-  # Manim pages render several clips per notebook and CI runners are slow;
-  # 180s was too tight.
-  timeout: 600
+  # Animation clips are pre-rendered at split time, so no page renders manim
+  # at build anymore; this is headroom for plotly/audio pages on slow CI
+  # runners.
+  timeout: 300
   # Run notebooks in a temp dir by default: the repo's `pyquist/` and
   # `content/pyquist/` directories shadow the installed pyquist package when
   # they're the execution CWD, breaking `import pyquist` at build time —

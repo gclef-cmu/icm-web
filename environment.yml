@@ -49,9 +49,9 @@ dependencies:
       # icm-plotly: house plotly template + the widget cells' build/live
       # display switch; also wheeled into _static/wheels.
       - -e ./tools/icm_plotly
-      # Manim + icm-anim: the {animation} directive's engine. Build-only —
-      # manim has no Pyodide build, so it's never wheeled for the browser.
-      # Encoding uses manim's bundled PyAV (no system ffmpeg); MathTex scenes
-      # need latex/dvisvgm (TeX Live locally, texlive apt in CI).
-      - manim==0.20.1
-      - -e ./tools/icm_anim
+      # Manim + icm-anim are deliberately NOT here: {animation} clips are
+      # pre-rendered at `make split` time into committed content/**/anim/
+      # mp4s, so the build never runs manim. Authoring or re-rendering
+      # animations needs a local install instead:
+      #   pip install manim==0.20.1 && pip install -e ./tools/icm_anim
+      # plus latex/dvisvgm on PATH for MathTex scenes (TeX Live).

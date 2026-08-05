@@ -6,21 +6,30 @@ strips the frontmatter, splits the body on `## ` headings (ignoring fenced
 code blocks), demotes headings one level, copies assets/code/figures across,
 and regenerates the chapter part of _toc.yml. A section that embeds a
 companion notebook via `{interactive}`/`{animation}` is emitted as a .ipynb
-instead of .md. It also mirrors the icm-f26/ course-website submodule into
-content/course/, copies book front matter (about.md, errata.md) from
+instead of .md; `{animation}` companions are additionally rendered — here,
+not at book build time — into committed clips under content/chNN/anim/
+(unchanged clips are reused byte-for-byte, so only new or edited scenes
+cost a manim render). It also mirrors the icm-f26/ course-website submodule
+into content/course/, copies book front matter (about.md, errata.md) from
 icm-text/ to content/, and copies icm-text/refs.bib to content/references.bib.
 
 Everything is authored in MyST already, so nothing is translated — only
-restructured. Run via `make split`. WARNING: wipes content/ch*/ and
-content/course/, dropping any local overrides; review `git diff content/`
-afterward.
+restructured. Run via `make split` (or `--page` for a standalone template
+folder). WARNING: wipes content/ch*/ and content/course/, dropping any local
+overrides; review `git diff content/` afterward.
 """
 from __future__ import annotations
 
+import argparse
+import ast
+import contextlib
+import hashlib
+import json
 import re
 import shutil
 import sys
 from pathlib import Path
+from typing import NamedTuple
 
 import nbformat
 from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook
@@ -77,6 +86,143 @@ def rewrite_flattened_paths(source: str) -> str:
     for old, new in FLATTEN_PATH_REWRITES:
         source = source.replace(old, new)
     return source
+
+
+# ---- {animation} pre-rendering ---------------------------------------------
+# Animation clips are rendered here, at split time, and committed as small
+# mp4 files under content/.../anim/ — the book build (and CI) never runs
+# manim. Each filename carries a content hash, so an unchanged companion
+# reuses its stashed file byte-for-byte and only new hashes render.
+ANIM_DIR = "anim"
+
+# Bumping this re-renders every clip (the hash can't see icm_anim internals
+# or palette changes). Escape hatch: rm -rf content/*/anim && make split.
+ANIM_SCHEME = "1"
+
+# Hashed into every filename AND passed to icm_anim.render_to_file, so an
+# encode-settings change re-renders everything by itself.
+ANIM_ENCODE = {"crf": "28", "preset": "veryslow", "tune": "animation"}
+
+# merge_chapters' round-trip re-split flips this off: filenames are a pure
+# function of the sources, so verifying bytes needs no manim.
+RENDER_ANIMATIONS = True
+
+# Mirrors icm_anim.show()'s keyword defaults.
+ANIM_SHOW_DEFAULTS = {"theme": "auto", "quality": "medium", "loop": True, "max_mb": 8.0}
+
+
+class AnimShow(NamedTuple):
+    """One show() call in a companion notebook, read statically."""
+
+    scene: str  # the Scene class name
+    theme: str
+    quality: str
+    loop: bool
+    max_mb: float
+    cell_index: int  # which companion code cell it sits in
+    ordinal: int  # 0-based across the companion
+
+
+class AnimRequest(NamedTuple):
+    """One mp4 a generated page references and materialize must provide."""
+
+    companion: Path  # absolute path to the companion notebook
+    filename: str  # hash-stamped name under anim/
+    show: AnimShow
+    dark: bool
+
+
+def parse_anim_shows(code_cells: list[str], src: Path) -> list[AnimShow]:
+    """Every show() call in a companion's code cells, without running manim.
+
+    Clip filenames must be computable statically (the merge round-trip
+    re-splits without rendering), so show() calls have a contract: top-level
+    statements of the form ``anim.show(SceneCls, theme=..., ...)`` — the
+    Scene class as a bare name, kwargs as literals.
+    """
+    shows: list[AnimShow] = []
+    for idx, source in enumerate(code_cells):
+        try:
+            tree = ast.parse(source)
+        except SyntaxError as e:
+            sys.exit(f"{src}: code cell {idx} does not parse: {e}")
+        for node in tree.body:
+            if not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)):
+                continue
+            call = node.value
+            func = call.func
+            name = (
+                func.attr
+                if isinstance(func, ast.Attribute)
+                else func.id if isinstance(func, ast.Name) else None
+            )
+            if name != "show":
+                continue
+            if len(call.args) != 1 or not isinstance(call.args[0], ast.Name):
+                sys.exit(
+                    f"{src}: show() needs the Scene class as its only "
+                    "positional argument, as a bare name"
+                )
+            kwargs = dict(ANIM_SHOW_DEFAULTS)
+            for kw in call.keywords:
+                if kw.arg not in ANIM_SHOW_DEFAULTS:
+                    sys.exit(f"{src}: show() got unsupported keyword {kw.arg!r}")
+                try:
+                    kwargs[kw.arg] = ast.literal_eval(kw.value)
+                except ValueError:
+                    sys.exit(
+                        f"{src}: show() keyword {kw.arg} must be a literal "
+                        "(the splitter reads it without running the cell)"
+                    )
+            if kwargs["theme"] not in ("auto", "light", "dark"):
+                sys.exit(f"{src}: show() theme must be auto/light/dark")
+            if kwargs["quality"] not in ("low", "medium", "high"):
+                sys.exit(f"{src}: show() quality must be low/medium/high")
+            shows.append(
+                AnimShow(
+                    scene=call.args[0].id,
+                    cell_index=idx,
+                    ordinal=len(shows),
+                    **kwargs,
+                )
+            )
+    if not shows:
+        sys.exit(f"{src}: no show() call found in animation companion")
+    return shows
+
+
+def anim_variants(theme: str) -> list[tuple[str, str, bool]]:
+    """(css_class, variant_name, dark) per rendered file.
+
+    Mirrors icm_anim.show(): auto bakes light+dark siblings the custom.css
+    mode rules switch between; a pinned theme gets one bare-class clip.
+    """
+    if theme == "auto":
+        return [
+            ("icm-anim icm-anim-light", "light", False),
+            ("icm-anim icm-anim-dark", "dark", True),
+        ]
+    return [("icm-anim", theme, theme == "dark")]
+
+
+def anim_clip_name(code_cells: list[str], show: AnimShow, variant: str, stem: str) -> str:
+    """Deterministic mp4 name: any input that changes the pixels changes it.
+
+    Hashes the raw companion code (kwarg edits re-render), the scene
+    identity, and the encode settings. Light/dark variants of one show
+    share the hash — the variant lives in the name.
+    """
+    key = "\x00".join(
+        [
+            ANIM_SCHEME,
+            json.dumps(ANIM_ENCODE, sort_keys=True),
+            show.scene,
+            str(show.ordinal),
+            *code_cells,
+        ]
+    )
+    digest = hashlib.sha256(key.encode()).hexdigest()[:12]
+    return f"{stem}-{show.scene}-{variant}-{digest}.mp4"
 
 
 # Cross-chapter links are authored against the icm-text layout, where
@@ -179,16 +325,23 @@ def cell_autorun(source: str) -> bool:
 
 
 def build_section_notebook(
-    section_md: str, chapter_folder: Path, chapter_num: int, sec_index: int
+    section_md: str,
+    chapter_folder: Path,
+    chapter_num: int,
+    sec_index: int,
+    anim_requests: list[AnimRequest] | None = None,
 ):
     """Turn a section that embeds companion notebooks into a notebook.
 
     The section text is segmented at each directive: the prose around them
-    becomes Markdown cells, and each directive expands to the referenced
-    notebook's cells (see add_notebook). Cells are not ``skip-execution``, so
-    the build bakes their output into the page. The notebook is stamped to
-    execute with its own directory as CWD (not the global run_in_temp temp
-    dir) so rewritten ./assets/ paths resolve at build time.
+    becomes Markdown cells, and each directive expands via add_notebook —
+    ``{interactive}`` to the companion's cells (not ``skip-execution``, so
+    the build bakes their output into the page), ``{animation}`` to a
+    Markdown cell of ``<video>`` tags referencing pre-rendered clips in
+    ./anim/. The mp4s each video cell needs are appended to
+    ``anim_requests`` for the caller to materialize. The notebook is stamped
+    to execute with its own directory as CWD (not the global run_in_temp
+    temp dir) so rewritten ./assets/ paths resolve at build time.
 
     Cell ids derive from chapter/section/ordinal, keeping the output
     byte-for-byte deterministic — tools/merge_chapters.py relies on that for
@@ -196,6 +349,8 @@ def build_section_notebook(
     path in its metadata so merge can collapse the run back into one
     directive line.
     """
+    if anim_requests is None:
+        anim_requests = []
     lines = section_md.splitlines(keepends=True)
     base = f"ch{chapter_num:02d}s{sec_index:02d}"
     cells: list = []
@@ -212,6 +367,60 @@ def build_section_notebook(
         cells.append(cell)
         k += 1
 
+    def add_animation(src: Path, rel: str) -> None:
+        """Expand an ``{animation}`` directive to pre-rendered video cells.
+
+        The companion's code never reaches the page — it runs only at render
+        time (see materialize_animations). Each code cell with a show() call
+        becomes one Markdown cell of ``<video>`` tags pointing at the
+        hash-named clips in ./anim/; code cells without one are dropped, and
+        Markdown cells pass through. Every referenced clip is appended to
+        ``anim_requests``.
+        """
+        nonlocal k
+        nb_cells = nbformat.read(str(src), as_version=4).cells
+        code_cells = [c.source for c in nb_cells if c.cell_type == "code"]
+        shows_by_cell: dict[int, list[AnimShow]] = {}
+        for s in parse_anim_shows(code_cells, src):
+            shows_by_cell.setdefault(s.cell_index, []).append(s)
+        code_idx = 0
+        for c in nb_cells:
+            meta = {"animation": {"path": rel}}
+            if c.cell_type == "markdown":
+                cell = new_markdown_cell(rewrite_flattened_paths(c.source))
+                cell["id"] = f"{base}m{k}"
+                cell["metadata"] = meta
+                cells.append(cell)
+                k += 1
+                continue
+            if c.cell_type != "code":
+                continue
+            cell_shows = shows_by_cell.get(code_idx, [])
+            code_idx += 1
+            if not cell_shows:
+                continue
+            videos: list[str] = []
+            for s in cell_shows:
+                for css, variant, dark in anim_variants(s.theme):
+                    fname = anim_clip_name(code_cells, s, variant, src.stem)
+                    loop_attr = " loop" if s.loop else ""
+                    # Attribute-for-attribute what icm_anim.show() emits,
+                    # with a file src instead of a data URI; layout lives on
+                    # .icm-anim in custom.css.
+                    videos.append(
+                        f'<video class="{css}" autoplay muted playsinline'
+                        f'{loop_attr} style="max-width:100%;" '
+                        f'src="./{ANIM_DIR}/{fname}"></video>'
+                    )
+                    anim_requests.append(
+                        AnimRequest(src.resolve(), fname, s, dark)
+                    )
+            cell = new_markdown_cell("\n".join(videos))
+            cell["id"] = f"{base}m{k}"
+            cell["metadata"] = meta
+            cells.append(cell)
+            k += 1
+
     def add_notebook(src: Path, rel: str, kind: str, group: int) -> None:
         """Expand a companion notebook in place as section cells.
 
@@ -226,11 +435,13 @@ def build_section_notebook(
         Each also gets an ``icm-run-group-{group}`` tag, one group per
         directive, so a Run's setup chain covers only its own notebook.
 
-        ``{animation}`` code cells are watch-only: always ``icm-hide-input``
-        plus ``disable-execution-cell`` (no editor, no Run chip), no run
-        group, and the visibility/no-output markers are ignored.
+        ``{animation}`` directives take the watch-only path instead: see
+        add_animation.
         """
         nonlocal k
+        if kind == "animation":
+            add_animation(src, rel)
+            return
         for c in nbformat.read(str(src), as_version=4).cells:
             source = rewrite_flattened_paths(c.source)
             meta = {kind: {"path": rel}}
@@ -243,19 +454,16 @@ def build_section_notebook(
             elif c.cell_type == "code":
                 cc = new_code_cell(source)
                 cc["id"] = f"{base}c{k}"
-                if kind == "animation":
-                    tags = ["icm-hide-input", "disable-execution-cell"]
-                else:
-                    visibility = cell_visibility(source)
-                    tags = [f"icm-run-group-{group}"]
-                    if visibility == "hide":
-                        tags.append("icm-hide-input")
-                    elif visibility == "collapse":
-                        tags.append("hide-input")
-                    if cell_no_output(source):
-                        tags.append("remove-output")
-                    if cell_autorun(source):
-                        tags.append("icm-autorun")
+                visibility = cell_visibility(source)
+                tags = [f"icm-run-group-{group}"]
+                if visibility == "hide":
+                    tags.append("icm-hide-input")
+                elif visibility == "collapse":
+                    tags.append("hide-input")
+                if cell_no_output(source):
+                    tags.append("remove-output")
+                if cell_autorun(source):
+                    tags.append("icm-autorun")
                 meta["tags"] = tags
                 cc["metadata"] = meta
                 cells.append(cc)
@@ -371,6 +579,141 @@ def demote_headings(lines: list[str]) -> list[str]:
     return out
 
 
+def import_icm_anim():
+    """Import the installed (editable) icm_anim, dodging the tools/ shadow.
+
+    Running tools/split_chapters.py as a script puts tools/ first on
+    sys.path, where the icm_anim and icm_widgets package DIRS shadow their
+    installed modules as empty namespace packages. Import with tools/
+    off the path — and purge any shadow already in sys.modules — so the
+    companions' own `import icm_anim` lands on the real thing too.
+    """
+    import os
+
+    tools_dir = os.path.dirname(os.path.abspath(__file__))
+    orig_path = list(sys.path)
+    sys.path[:] = [p for p in sys.path if os.path.abspath(p or ".") != tools_dir]
+    try:
+        for name in ("icm_anim", "icm_widgets"):
+            mod = sys.modules.get(name)
+            if mod is not None and getattr(mod, "__file__", None) is None:
+                del sys.modules[name]
+        import icm_anim
+
+        return icm_anim
+    finally:
+        sys.path[:] = orig_path
+
+
+def stash_anim_files(out_dir: Path) -> dict[str, bytes]:
+    """Existing anim/ clip bytes by name, read before out_dir is wiped."""
+    anim_dir = out_dir / ANIM_DIR
+    if not anim_dir.exists():
+        return {}
+    return {p.name: p.read_bytes() for p in anim_dir.glob("*.mp4")}
+
+
+def capture_companion_shows(companion: Path, icm_anim) -> list:
+    """Exec a companion's code cells, recording show() calls unrendered.
+
+    Gives materialize the actual Scene classes; runs with CWD at the
+    companion's dir so any ../assets/ reads resolve.
+    """
+    nb = nbformat.read(str(companion), as_version=4)
+    code_cells = [c.source for c in nb.cells if c.cell_type == "code"]
+    namespace = {"__name__": "__icm_split_render__"}
+    with icm_anim.capture_shows() as captured:
+        for i, source in enumerate(code_cells):
+            exec(compile(source, f"{companion}:cell{i}", "exec"), namespace)
+    parsed = parse_anim_shows(code_cells, companion)
+    matches = len(captured) == len(parsed) and all(
+        c.scene_cls.__name__ == p.scene
+        and (c.theme, c.quality, c.loop, c.max_mb)
+        == (p.theme, p.quality, p.loop, p.max_mb)
+        for c, p in zip(captured, parsed)
+    )
+    if not matches:
+        sys.exit(
+            f"{companion}: show() calls at run time don't match the static "
+            "parse — keep each one a top-level anim.show(SceneCls, ...) with "
+            "literal kwargs"
+        )
+    return captured
+
+
+def check_anim_budgets(requests: list[AnimRequest], anim_dir: Path) -> None:
+    """Enforce each show()'s max_mb on its committed files (all variants)."""
+    by_show: dict[tuple[Path, int], list[AnimRequest]] = {}
+    for r in requests:
+        by_show.setdefault((r.companion, r.show.ordinal), []).append(r)
+    for reqs in by_show.values():
+        show = reqs[0].show
+        sizes = {r.filename: (anim_dir / r.filename).stat().st_size / 1e6 for r in reqs}
+        weight = sum(sizes.values())
+        if weight > show.max_mb:
+            for r in reqs:
+                (anim_dir / r.filename).unlink(missing_ok=True)
+            detail = ", ".join(f"{mb:.2f}" for mb in sizes.values())
+            sys.exit(
+                f"{show.scene} weighs {weight:.2f} MB as committed video "
+                f"({detail}) against a {show.max_mb:.2f} MB budget — shorten "
+                "the clip, calm the motion, or check the quality flag"
+            )
+
+
+def materialize_animations(
+    requests: list[AnimRequest], anim_dir: Path, stash: dict[str, bytes]
+) -> None:
+    """Provide every clip the generated pages reference.
+
+    Known hashes are rewritten from the stash byte-for-byte (so an unchanged
+    split is a no-op for git); only new hashes render, and stashed files no
+    page references anymore simply never come back. Skips rendering when
+    RENDER_ANIMATIONS is off (merge's round-trip re-split).
+    """
+    wanted: dict[str, AnimRequest] = {}
+    for r in requests:
+        wanted.setdefault(r.filename, r)
+    if not wanted:
+        return
+    anim_dir.mkdir(parents=True, exist_ok=True)
+    misses: list[AnimRequest] = []
+    for fname, r in wanted.items():
+        if fname in stash:
+            (anim_dir / fname).write_bytes(stash[fname])
+        else:
+            misses.append(r)
+    if misses:
+        if not RENDER_ANIMATIONS:
+            return
+        try:
+            icm_anim = import_icm_anim()
+        except ImportError as e:
+            names = "\n".join(f"    {ANIM_DIR}/{r.filename}" for r in misses)
+            sys.exit(
+                f"animation clips need rendering:\n{names}\n"
+                f"  but icm_anim is not importable ({e}) — install manim "
+                "and `pip install -e tools/icm_anim`, or restore the "
+                "committed anim/ files"
+            )
+        by_companion: dict[Path, list[AnimRequest]] = {}
+        for r in misses:
+            by_companion.setdefault(r.companion, []).append(r)
+        for companion, reqs in sorted(by_companion.items()):
+            with contextlib.chdir(companion.parent):
+                captured = capture_companion_shows(companion, icm_anim)
+                for r in reqs:
+                    size = icm_anim.render_to_file(
+                        captured[r.show.ordinal].scene_cls,
+                        dark=r.dark,
+                        quality=r.show.quality,
+                        dest=anim_dir / r.filename,
+                        **ANIM_ENCODE,
+                    )
+                    print(f"  rendered {ANIM_DIR}/{r.filename} ({size / 1e6:.2f} MB)")
+    check_anim_budgets(requests, anim_dir)
+
+
 def split_chapter(folder: Path) -> dict | None:
     m = CHAPTER_FOLDER_RE.match(folder.name)
     if not m:
@@ -404,6 +747,7 @@ def split_chapter(folder: Path) -> dict | None:
     intro_text = "".join(intro_after_title).strip("\n")
 
     out_dir = CONTENT / f"ch{chapter_num:02d}"
+    anim_stash = stash_anim_files(out_dir)
     if out_dir.exists():
         shutil.rmtree(out_dir)
     out_dir.mkdir(parents=True)
@@ -414,6 +758,7 @@ def split_chapter(folder: Path) -> dict | None:
     (out_dir / "index.md").write_text(index_md)
 
     section_refs: list[str] = []
+    anim_requests: list[AnimRequest] = []
     for i, (title, content_lines) in enumerate(sections):
         body_text = "".join(demote_headings(content_lines)).strip("\n")
         section_md = f"# {chapter_num}.{i} {title}\n"
@@ -423,7 +768,9 @@ def split_chapter(folder: Path) -> dict | None:
         # other section stays Markdown. The TOC entry is extensionless either
         # way, so Jupyter Book resolves NN.ipynb or NN.md unchanged.
         if section_directives(section_md):
-            nb = build_section_notebook(section_md, folder, chapter_num, i)
+            nb = build_section_notebook(
+                section_md, folder, chapter_num, i, anim_requests
+            )
             (out_dir / f"{i:02d}.ipynb").write_text(nbformat.writes(nb) + "\n")
         else:
             (out_dir / f"{i:02d}.md").write_text(section_md)
@@ -433,6 +780,8 @@ def split_chapter(folder: Path) -> dict | None:
         src_sub = folder / sub
         if src_sub.exists():
             shutil.copytree(src_sub, out_dir / sub)
+
+    materialize_animations(anim_requests, out_dir / ANIM_DIR, anim_stash)
 
     return {
         "chapter_num": chapter_num,
@@ -698,6 +1047,29 @@ def sync_front_matter() -> None:
         print(f"  synced content/{name}  <- icm-text/{name}")
 
 
+def split_standalone_page(folder: Path, chapter_num: int, sec_index: int) -> None:
+    """Regenerate folder/index.ipynb from folder/main.md + notebooks/.
+
+    The template pages' entry point: the same expansion split_chapter runs
+    on chapter sections, including the anim/ stash-and-materialize pass.
+    Nothing else in the folder is touched.
+    """
+    main_md = folder / "main.md"
+    if not main_md.exists():
+        sys.exit(f"{main_md} not found")
+    anim_stash = stash_anim_files(folder)
+    anim_dir = folder / ANIM_DIR
+    if anim_dir.exists():
+        shutil.rmtree(anim_dir)
+    anim_requests: list[AnimRequest] = []
+    nb = build_section_notebook(
+        main_md.read_text(), folder, chapter_num, sec_index, anim_requests
+    )
+    (folder / "index.ipynb").write_text(nbformat.writes(nb) + "\n")
+    materialize_animations(anim_requests, anim_dir, anim_stash)
+    print(f"  wrote {folder / 'index.ipynb'}")
+
+
 def main() -> int:
     if not SOURCE.exists() or not any(SOURCE.iterdir()):
         sys.exit(
@@ -726,5 +1098,32 @@ def main() -> int:
     return 0
 
 
+def cli() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument(
+        "--page",
+        type=Path,
+        help="regenerate one standalone page folder (main.md + notebooks/) "
+        "instead of splitting icm-text",
+    )
+    ap.add_argument(
+        "--chapter",
+        type=int,
+        default=99,
+        help="chapter number for --page cell ids (default: 99)",
+    )
+    ap.add_argument(
+        "--section",
+        type=int,
+        default=0,
+        help="section index for --page cell ids (default: 0)",
+    )
+    args = ap.parse_args()
+    if args.page:
+        split_standalone_page(args.page.resolve(), args.chapter, args.section)
+        return 0
+    return main()
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(cli())

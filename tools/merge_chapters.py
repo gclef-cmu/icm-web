@@ -227,17 +227,22 @@ def roundtrip_check(merged_root: Path, results: list[dict]) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         tmp_content = Path(tmp) / "content"
         tmp_content.mkdir()
-        # Temporarily redirect the splitter's CONTENT and SOURCE globals.
+        # Temporarily redirect the splitter's CONTENT and SOURCE globals, and
+        # turn off animation rendering — clip filenames are a pure function
+        # of the sources, so the byte comparison needs no manim.
         import split_chapters as sp
 
         orig_source, orig_content = sp.SOURCE, sp.CONTENT
+        orig_render = sp.RENDER_ANIMATIONS
         sp.SOURCE, sp.CONTENT = merged_root, tmp_content
+        sp.RENDER_ANIMATIONS = False
         try:
             for r in results:
                 folder = merged_root / r["slug"]
                 sp.split_chapter(folder)
         finally:
             sp.SOURCE, sp.CONTENT = orig_source, orig_content
+            sp.RENDER_ANIMATIONS = orig_render
 
         any_diff = False
         for r in results:

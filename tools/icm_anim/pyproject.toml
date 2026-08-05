@@ -1,6 +1,8 @@
-# The book's animation engine (manim -> chrome-less <video>). Build-only:
+# The book's animation engine (manim -> chrome-less <video>). Authoring-only:
 # manim has no Pyodide build, so unlike icm_widgets this is never wheeled for
-# the browser kernel. Installed editable via environment.yml.
+# the browser kernel — and since clips are pre-rendered at `make split` time,
+# the book build (and CI) doesn't need it either. Install editable locally
+# alongside manim to author or re-render animations.
 #
 # icm-widgets (the palette source) is deliberately NOT declared as a
 # dependency: it isn't on PyPI, so declaring it would make a standalone
@@ -13,7 +15,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "icm-anim"
-version = "0.1.0"
+version = "0.2.0"
 description = "Narrative-animation rendering for CMU Intro to Computer Music pages (manim scenes baked to inert looping video)."
 requires-python = ">=3.10"
 dependencies = ["manim>=0.20,<0.21"]

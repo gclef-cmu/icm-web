@@ -1,11 +1,13 @@
 """Render manim scenes into the book as chrome-less looping video.
 
 This backs the ``{animation}`` directive: an animation cell defines a manim
-``Scene`` and ends with ``anim.show(SceneCls)``, which renders it headless and
-returns autoplaying, looping ``<video>`` elements with the mp4 inlined — no
-player controls, no JavaScript. Animations are watch-only (manim can't run in
-the browser kernel), so the splitter hides the cell's code; the HTML is built
-here so cells stay pure Python.
+``Scene`` and ends with ``anim.show(SceneCls)``. In a notebook that renders
+headless and returns autoplaying, looping ``<video>`` elements with the mp4
+inlined — no player controls, no JavaScript. The book itself never renders:
+``make split`` records each show() call via capture_shows(), renders once
+through render_to_file() (tuned re-encode, much smaller than show()'s crf-23
+inline payload), and commits the mp4s under content/.../anim/, so the built
+page just references files.
 """
 
 from __future__ import annotations
@@ -13,9 +15,11 @@ from __future__ import annotations
 import base64
 import contextlib
 import io
+import os
 import shutil
 import sys
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
 import av
@@ -27,7 +31,19 @@ from manim import DecimalNumber, MathTex, Scene, Tex, Text, tempconfig
 # to manim's neon colors, so scenes use anim.RED etc.
 from icm_widgets import BLUE, GOLD, IRON, RED, STEEL, TEAL  # noqa: F401
 
-__all__ = ["show", "RED", "BLUE", "GOLD", "IRON", "TEAL", "STEEL", "INK", "INK_DARK"]
+__all__ = [
+    "show",
+    "capture_shows",
+    "render_to_file",
+    "RED",
+    "BLUE",
+    "GOLD",
+    "IRON",
+    "TEAL",
+    "STEEL",
+    "INK",
+    "INK_DARK",
+]
 
 INK = "#3B3B3B"  # house label/axis grey
 INK_DARK = "#ECECEC"
@@ -61,10 +77,49 @@ _SRGB_TAG = (
 )
 
 
-def _tag_srgb(movie: Path) -> Path:
-    """Remux ``movie`` with sRGB color metadata; returns the tagged file."""
+# Split-time recorder: while capture_shows() is active, show() appends its
+# call here instead of rendering.
+_capture: list[ShowCall] | None = None
+
+
+@dataclass
+class ShowCall:
+    """One recorded show() call: everything render_to_file needs later."""
+
+    scene_cls: type[Scene]
+    theme: str
+    quality: str
+    loop: bool
+    max_mb: float
+
+
+@contextlib.contextmanager
+def capture_shows():
+    """Record show() calls instead of rendering them.
+
+    The splitter execs a companion notebook under this to get the Scene
+    classes and their show() kwargs without paying for a render; yields the
+    list the calls land in.
+    """
+    global _capture
+    if _capture is not None:
+        raise RuntimeError("capture_shows() does not nest")
+    _capture = []
+    try:
+        yield _capture
+    finally:
+        _capture = None
+
+
+def _tag_srgb(movie: Path, *, faststart: bool = False) -> Path:
+    """Remux ``movie`` with sRGB color metadata; returns the tagged file.
+
+    ``faststart`` puts the moov atom first so committed clips start playing
+    before the file finishes downloading.
+    """
     tagged = movie.with_name(movie.stem + "-srgb.mp4")
-    with av.open(str(movie)) as inp, av.open(str(tagged), "w") as outp:
+    mux_opts = {"movflags": "+faststart"} if faststart else {}
+    with av.open(str(movie)) as inp, av.open(str(tagged), "w", options=mux_opts) as outp:
         in_v = inp.streams.video[0]
         out_v = outp.add_stream_from_template(in_v)
         bsf = BitStreamFilterContext(_SRGB_TAG, in_v, out_v)
@@ -92,11 +147,10 @@ def _reset_theme() -> None:
         cls.set_default()  # bare call restores the original
 
 
-def _render(scene_cls: type[Scene], dark: bool, quality: str) -> str:
-    """One headless render of ``scene_cls`` -> base64 mp4."""
-    media = Path(tempfile.mkdtemp(prefix="icm-anim-"))
-    # The cell's input is hidden, so any render chatter would appear as an
-    # orphaned output block. Capture everything; replay only on failure.
+def _render_raw(scene_cls: type[Scene], dark: bool, quality: str, media: Path) -> Path:
+    """One headless render of ``scene_cls`` into ``media``; returns the mp4."""
+    # The caller shows no source (hidden cell or split log), so any render
+    # chatter would be noise. Capture everything; replay only on failure.
     out, err = io.StringIO(), io.StringIO()
     try:
         with tempconfig(
@@ -118,10 +172,89 @@ def _render(scene_cls: type[Scene], dark: bool, quality: str) -> str:
                 sys.stdout.write(out.getvalue())
                 sys.stderr.write(err.getvalue())
                 raise
-            movie = _tag_srgb(Path(scene.renderer.file_writer.movie_file_path))
-            return base64.b64encode(movie.read_bytes()).decode("ascii")
+            return Path(scene.renderer.file_writer.movie_file_path)
     finally:
         _reset_theme()
+
+
+def _render(scene_cls: type[Scene], dark: bool, quality: str) -> str:
+    """One headless render of ``scene_cls`` -> base64 mp4."""
+    media = Path(tempfile.mkdtemp(prefix="icm-anim-"))
+    try:
+        movie = _tag_srgb(_render_raw(scene_cls, dark, quality, media))
+        return base64.b64encode(movie.read_bytes()).decode("ascii")
+    finally:
+        shutil.rmtree(media, ignore_errors=True)
+
+
+def _reencode(movie: Path, *, crf: str, preset: str, tune: str | None = None) -> Path:
+    """Transcode ``movie`` to a much smaller H.264; returns the new file.
+
+    Decode and encode share the yuv420p pixel format, so the planes pass
+    through untouched — no colorspace conversion, and the limited-range-safe
+    _PAGE_DARK background survives exactly.
+    """
+    small = movie.with_name(movie.stem + "-small.mp4")
+    with av.open(str(movie)) as inp, av.open(str(small), "w") as outp:
+        in_v = inp.streams.video[0]
+        out_v = outp.add_stream("libx264", rate=in_v.average_rate)
+        out_v.width = in_v.codec_context.width
+        out_v.height = in_v.codec_context.height
+        out_v.pix_fmt = "yuv420p"
+        options = {"crf": crf, "preset": preset}
+        if tune:
+            options["tune"] = tune
+        out_v.options = options
+        frames_written = 0
+        for frame in inp.decode(in_v):
+            # Re-time frames against the new stream and clear the decoded
+            # I/P/B types so x264 decides keyframes itself.
+            if out_v.codec_context.time_base is not None:
+                frame.time_base = out_v.codec_context.time_base
+            frame.pts = frames_written
+            frames_written += 1
+            frame.pict_type = 0
+            for packet in out_v.encode(frame):
+                outp.mux(packet)
+        for packet in out_v.encode():
+            outp.mux(packet)
+    return small
+
+
+def render_to_file(
+    scene_cls: type[Scene],
+    *,
+    dark: bool,
+    quality: str,
+    dest: Path,
+    crf: str = "28",
+    preset: str = "veryslow",
+    tune: str | None = None,
+) -> int:
+    """Render ``scene_cls`` and write a compressed, sRGB-tagged mp4 at ``dest``.
+
+    The split-time path behind the {animation} directive: same render as
+    show(), then a tuned re-encode instead of base64 inlining. Returns the
+    byte size of the written file; writes via a sibling temp name so an
+    interrupted run never leaves a truncated clip behind.
+    """
+    if quality not in _QUALITIES:
+        raise ValueError(
+            f"quality must be one of {sorted(_QUALITIES)} — got {quality!r}"
+        )
+    dest = Path(dest)
+    media = Path(tempfile.mkdtemp(prefix="icm-anim-"))
+    try:
+        movie = _render_raw(scene_cls, dark, _QUALITIES[quality], media)
+        tagged = _tag_srgb(
+            _reencode(movie, crf=crf, preset=preset, tune=tune), faststart=True
+        )
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        tmp = dest.with_name(dest.name + ".tmp")
+        shutil.copyfile(tagged, tmp)
+        tmp.replace(dest)
+        return dest.stat().st_size
+    finally:
         shutil.rmtree(media, ignore_errors=True)
 
 
@@ -154,9 +287,10 @@ def show(
     loop:
         Play forever. ``False`` plays once.
     max_mb:
-        Weight budget for the clip as page payload (base64 costs ~4/3 the
-        mp4; ``theme="auto"`` ships both renders). Exceeding it raises
-        instead of quietly shipping a heavy page.
+        Weight budget for the clip (``theme="auto"`` counts both renders).
+        In a notebook that's the inline base64 payload; at split time the
+        splitter enforces it on the committed files instead. Exceeding it
+        raises rather than quietly shipping a heavy page.
     """
     if not (isinstance(scene_cls, type) and issubclass(scene_cls, Scene)):
         raise TypeError("show() wants the Scene subclass itself, e.g. show(MyScene)")
@@ -166,6 +300,18 @@ def show(
         )
     if theme not in ("auto", "light", "dark"):
         raise ValueError(f'theme must be "auto", "light" or "dark" — got {theme!r}')
+
+    if _capture is not None:
+        _capture.append(ShowCall(scene_cls, theme, quality, loop, max_mb))
+        return HTML("")
+
+    if os.environ.get("ICM_BOOK_BUILD"):
+        raise RuntimeError(
+            "icm_anim.show() executed during a book build — animation cells "
+            "are pre-rendered at split time now; re-run `make split` (or "
+            "`make template-animation`) and commit the regenerated page plus "
+            "its anim/ files."
+        )
 
     # Fixed-look clips carry only the bare class, which the custom.css mode
     # rules never hide.
