@@ -15,8 +15,6 @@ parts:
             title: "Assignment 1"
           - file: content/course/assignments/02
             title: "Assignment 2"
-          - file: content/course/assignments/03
-            title: "Assignment 3*"
           - file: content/course/assignments/03/index
             title: "Assignment 3*"
             sections:
