@@ -21,11 +21,11 @@ Each assignment in this course is one of two types:
 ::::{grid} 1 1 2 2
 
 :::{grid-item-card}
-**Autograded assignments** are submitted via an assignment-specific Gradescope link and graded largely automatically.
+:{blue}[**Autograded assignments**] are submitted via an assignment-specific Gradescope link and graded largely automatically.
 :::
 
 :::{grid-item-card}
-**Open-ended assignments** are marked with an asterisk (`*`) throughout the course (e.g., Assignment 3\*). These are checked with a [common Gradescope validation tool](https://www.gradescope.com/courses/1326756/assignments/8238316) and then [submitted via Google Forms](https://forms.gle/Q2fjknDhxNMsR24J7).
+:{green}[**Open-ended assignments**] are marked with an asterisk (`*`) throughout the course (e.g., Assignment 3\*). These are checked with a [common Gradescope validation tool](https://www.gradescope.com/courses/1326756/assignments/8238316) and then [submitted via Google Forms](https://forms.gle/Q2fjknDhxNMsR24J7).
 :::
 
 ::::
