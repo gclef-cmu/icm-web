@@ -8,8 +8,8 @@ instructions and policies on the [Assignments page](../index.md) before you begi
 **Pick _one_ of the open-ended directions below.**
 
 - [Direction 1 (Creative): A Song from the Best Impulse Responses on Campus](./1-creative.md)
-- [Direction 2 (Technical): Analog Resurrection](./2-technical.md)
-- [Direction 3 (Technical): Bending Time](./3-technical.md)
+- [Direction 2 (Technical): Bending Time](./2-technical.md)
+- [Direction 3 (Technical): Analog Resurrection](./3-technical.md)
 
 This assignment allows AI and rewards your own creativity. The technical directions each come with a **starter notebook** that walks you through the topic. You are free to adjust it or depart from it, and you do not submit the notebook itself; you submit the standard open-ended format below.
 
