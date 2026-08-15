@@ -67,6 +67,12 @@ jobs:
         run: make book
       # ==== ...to here (keep the comments from deploy-book.yml too) ====
 
+      # SCS runs plain Apache: serving 404.html for unknown URLs is a GitHub
+      # Pages convention, so point Apache at it explicitly. Written here, not
+      # committed to the repo, to keep it out of the Pages artifact.
+      - name: Add .htaccess for custom 404 (SCS Apache)
+        run: printf 'ErrorDocument 404 /~15322/404.html\n' > _build/html/.htaccess
+
       - name: Copy site to SCS AFS dir
         uses: appleboy/scp-action@v1
         with:
