@@ -5,15 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>404 — CMU Intro to Computer Music</title>
   <script>
-    // GH Pages serves the site under /<repo>/ (project page). When this
-    // 404 is returned for a deep bad URL, relative links would resolve
-    // against that URL, not the site root. Inject <base> pointing at the
-    // deploy prefix so links below stay correct. Locally (npx serve) the
-    // site lives at /, so the prefix is just /.
+    // The site deploys under a path prefix: /<repo>/ on GH Pages project
+    // sites, /~15322/ on SCS. When this 404 is returned for a deep bad URL,
+    // relative links would resolve against that URL, not the site root.
+    // Inject <base> pointing at the deploy prefix so links below stay
+    // correct. Locally (npx serve) the site lives at /, so the prefix is /.
     (function () {
       var parts = location.pathname.split('/').filter(Boolean);
-      var isProjectPage = /\.github\.io$/i.test(location.hostname) && parts.length > 0;
-      var prefix = isProjectPage ? '/' + parts[0] + '/' : '/';
+      var prefix = '/';
+      if (/\.github\.io$/i.test(location.hostname) && parts.length > 0) {
+        prefix = '/' + parts[0] + '/';
+      } else if (parts.length > 0 && parts[0].charAt(0) === '~') {
+        prefix = '/' + parts[0] + '/';
+      }
       document.write('<base href="' + prefix + '">');
     })();
   </script>
