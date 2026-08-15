@@ -1,0 +1,79 @@
+name: deploy-scs
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Don't let two deploys scp into the AFS dir at once. Separate group from
+# the Pages workflow ("pages") — the two deploys don't conflict.
+concurrency:
+  group: scs
+  cancel-in-progress: false
+
+jobs:
+  deploy-scs:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -el {0}
+
+    steps:
+      # ==== identical to deploy-book.yml from here... ====
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Fetch pyquist submodule (public, over HTTPS)
+        run: |
+          git config submodule.pyquist.url https://github.com/gclef-cmu/pyquist.git
+          git submodule update --init --remote pyquist
+
+      - name: Install PortAudio (system dep of sounddevice)
+        run: sudo apt-get update && sudo apt-get install -y libportaudio2
+
+      - name: Restore notebook execution cache
+        uses: actions/cache@v4
+        with:
+          path: _build/.jupyter_cache
+          key: jcache-${{ hashFiles('environment.yml', '_config.yml', 'tools/**', 'pyquist/pyquist/**') }}-${{ github.sha }}
+          restore-keys: |
+            jcache-${{ hashFiles('environment.yml', '_config.yml', 'tools/**', 'pyquist/pyquist/**') }}-
+
+      - name: Set up Conda environment
+        uses: conda-incubator/setup-miniconda@v4
+        with:
+          miniforge-version: latest
+          environment-file: environment.yml
+          activate-environment: icmbook
+          auto-activate-base: false
+          channels: conda-forge
+          channel-priority: strict
+          conda-remove-defaults: "true"
+
+      - name: Force-install TeachBooks sphinx-thebe fork
+        run: |
+          pip install --force-reinstall --no-deps \
+            "sphinx-thebe @ git+https://github.com/TeachBooks/Sphinx-Thebe@1f3a80969622b7d63f48f05d8769f5cb933202a0"
+
+      - name: Verify Pyquist resolves to the submodule
+        run: |
+          python -c "import pyquist; print('pyquist at', pyquist.__path__[0])"
+
+      - name: Build the book
+        run: make book
+      # ==== ...to here (keep the comments from deploy-book.yml too) ====
+
+      - name: Copy site to SCS AFS dir
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SCS_HOSTNAME }}
+          username: ${{ secrets.CHRIS_SCS_USERNAME }}
+          password: ${{ secrets.CHRIS_SCS_PASSWORD }}
+          port: 22
+          source: _build/html/*
+          target: ${{ secrets.SCS_DEPLOY_DIR }}
+          strip_components: 2
