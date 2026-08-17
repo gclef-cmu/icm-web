@@ -32,6 +32,12 @@ jobs:
           git config submodule.pyquist.url https://github.com/gclef-cmu/pyquist.git
           git submodule update --init --remote pyquist
 
+      - name: Fetch icm-text + icm-f26 submodules (pinned, over HTTPS)
+        run: |
+          git config submodule.icm-text.url "https://x-access-token:${{ secrets.ICM_TEXT_READ_TOKEN }}@github.com/chrisdonahue/icm-text.git"
+          git config submodule.icm-f26.url "https://x-access-token:${{ secrets.ICM_F26_READ_TOKEN }}@github.com/gclef-cmu/icm-f26.git"
+          git submodule update --init icm-text icm-f26
+
       - name: Install PortAudio (system dep of sounddevice)
         run: sudo apt-get update && sudo apt-get install -y libportaudio2
 
@@ -62,6 +68,9 @@ jobs:
       - name: Verify Pyquist resolves to the submodule
         run: |
           python -c "import pyquist; print('pyquist at', pyquist.__path__[0])"
+
+      - name: Split book sources
+        run: make split
 
       - name: Build the book
         run: make book

@@ -19,8 +19,11 @@ parts:
             title: "Assignment 3*"
             sections:
               - file: course/assignments/03/1-creative
+                title: "Direction 1 (Creative)"
               - file: course/assignments/03/2-technical
+                title: "Direction 2 (Technical)"
               - file: course/assignments/03/3-technical
+                title: "Direction 3 (Technical)"
           - file: course/assignments/04
             title: "Assignment 4"
           - file: course/assignments/05/index
@@ -45,6 +48,10 @@ parts:
                 title: "Direction 3 (Technical)"
           - file: course/assignments/09
             title: "Assignment 9*"
+          - file: course/assignments/09/index
+            title: "Assignment 9*"
+            sections:
+              - file: course/assignments/09/1-technical
           - file: course/assignments/322-final
           - file: course/assignments/622-final
       - file: course/resources/index

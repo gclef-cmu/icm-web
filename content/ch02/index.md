@@ -1,3 +1,0 @@
-# 2. Synthesis and Vectorized Computation
-
-In Chapter 1 we built the conceptual foundation of digital audio: how analog sound $x(t)$ gets sampled, quantized, and **stored on a computer as an array of numbers**. This chapter is an introduction to programming techniques that will allow you to synthesize and manipulate those arrays. We'll write our first real synthesis code, learn _vectorized computation_ in NumPy (the library that we'll use extensively for computer music programming in Python), and introduce _Pyquist_, a lightweight computer music Python library we'll use throughout the rest of the book.

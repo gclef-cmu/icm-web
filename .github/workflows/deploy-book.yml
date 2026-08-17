@@ -6,7 +6,8 @@ on:
       - main
   workflow_dispatch:
   # Builds are deterministic: the book only changes when the repo (incl. the
-  # pinned pyquist submodule) does.
+  # pinned icm-text/icm-f26 submodules) does. (pyquist temporarily floats on
+  # a branch — see its fetch step.)
 
 permissions:
   contents: read
@@ -28,10 +29,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-        # NOTE: do NOT set `submodules: true` — icm-text is PRIVATE and the
-        # default GITHUB_TOKEN can't read it. The build doesn't need it (its
-        # prose is already split into content/ch*/); only pyquist is fetched
-        # below, over HTTPS so no SSH key is needed.
+        # NOTE: do NOT set `submodules: true` — .gitmodules uses SSH URLs and
+        # icm-text is private, so the default checkout can't fetch them. Each
+        # submodule is fetched explicitly below over HTTPS instead (pyquist
+        # anonymously, icm-text/icm-f26 with per-repo read-token secrets —
+        # two tokens because the repos have different owners and fine-grained
+        # PATs are single-owner).
 
       - name: Fetch pyquist submodule (public, over HTTPS)
         run: |
@@ -40,14 +43,24 @@ jobs:
           # browser-recording); revert to a plain `--init` pin once merged.
           git submodule update --init --remote pyquist
 
+      - name: Fetch icm-text + icm-f26 submodules (pinned, over HTTPS)
+        run: |
+          # Token URLs must be set BEFORE --init so init doesn't copy the SSH
+          # URLs from .gitmodules (same trick as the pyquist step above). No
+          # --remote: both stay at the SHAs pinned by this commit.
+          git config submodule.icm-text.url "https://x-access-token:${{ secrets.ICM_TEXT_READ_TOKEN }}@github.com/chrisdonahue/icm-text.git"
+          git config submodule.icm-f26.url "https://x-access-token:${{ secrets.ICM_F26_READ_TOKEN }}@github.com/gclef-cmu/icm-f26.git"
+          git submodule update --init icm-text icm-f26
+
       # autodoc imports pyquist.device, whose sounddevice dependency dlopens
       # PortAudio at import time — without this the build dies.
       - name: Install PortAudio (system dep of sounddevice)
         run: sudo apt-get update && sudo apt-get install -y libportaudio2
 
       # No manim/TeX Live/pango here on purpose: {animation} clips are
-      # pre-rendered at `make split` time and committed under
-      # content/**/anim/ — the build just serves those files.
+      # rendered at authoring time and committed under content/chNN/anim/
+      # (the only tracked part of content/ch*/) — the split below reuses
+      # them byte-for-byte via the content hash in their filenames.
 
       # Persist the jupyter-cache so a push only executes the notebooks it
       # changed. jupyter-cache invalidates per-notebook by content hash; the
@@ -89,6 +102,13 @@ jobs:
       - name: Verify Pyquist resolves to the submodule
         run: |
           python -c "import pyquist; print('pyquist at', pyquist.__path__[0])"
+
+      # Regenerate content/ and _toc.yml from the pinned submodules. Reuses
+      # the committed anim clips, so no manim/TeX — if a bumped icm-text
+      # changed a scene without new committed clips, this fails loudly
+      # asking for them.
+      - name: Split book sources
+        run: make split
 
       - name: Build the book
         run: make book
