@@ -1,207 +1,207 @@
 # Table of contents for "CMU Intro to Computer Music"
 # Docs: https://jupyterbook.org/customize/toc.html
 format: jb-book
-root: content/index
+root: index
 
 parts:
   - caption: Course Information
     chapters:
-      - file: content/course/home
-      - file: content/course/about
-      - file: content/course/schedule
-      - file: content/course/assignments/index
+      - file: course/home
+      - file: course/about
+      - file: course/schedule
+      - file: course/assignments/index
         sections:
-          - file: content/course/assignments/01
+          - file: course/assignments/01
             title: "Assignment 1"
-          - file: content/course/assignments/02
+          - file: course/assignments/02
             title: "Assignment 2"
-          - file: content/course/assignments/03/index
+          - file: course/assignments/03/index
             title: "Assignment 3*"
             sections:
-              - file: content/course/assignments/03/1-creative
-              - file: content/course/assignments/03/2-technical
-              - file: content/course/assignments/03/3-technical
-          - file: content/course/assignments/04
+              - file: course/assignments/03/1-creative
+              - file: course/assignments/03/2-technical
+              - file: course/assignments/03/3-technical
+          - file: course/assignments/04
             title: "Assignment 4"
-          - file: content/course/assignments/05/index
+          - file: course/assignments/05/index
             title: "Assignment 5*"
             sections:
-              - file: content/course/assignments/05/1-creative
+              - file: course/assignments/05/1-creative
                 title: "Direction 1 (Creative)"
-              - file: content/course/assignments/05/2-technical
+              - file: course/assignments/05/2-technical
                 title: "Direction 2 (Technical)"
-          - file: content/course/assignments/06
+          - file: course/assignments/06
             title: "Assignment 6"
-          - file: content/course/assignments/07
+          - file: course/assignments/07
             title: "Assignment 7"
-          - file: content/course/assignments/08/index
+          - file: course/assignments/08/index
             title: "Assignment 8*"
             sections:
-              - file: content/course/assignments/08/1-creative
+              - file: course/assignments/08/1-creative
                 title: "Direction 1 (Creative)"
-              - file: content/course/assignments/08/2-technical
+              - file: course/assignments/08/2-technical
                 title: "Direction 2 (Technical)"
-              - file: content/course/assignments/08/3-technical
+              - file: course/assignments/08/3-technical
                 title: "Direction 3 (Technical)"
-          - file: content/course/assignments/09
+          - file: course/assignments/09
             title: "Assignment 9*"
-          - file: content/course/assignments/322-final
-          - file: content/course/assignments/622-final
-      - file: content/course/resources/index
+          - file: course/assignments/322-final
+          - file: course/assignments/622-final
+      - file: course/resources/index
         sections:
-          - file: content/course/resources/1-accounts
-          - file: content/course/resources/2-textbooks
-          - file: content/course/resources/3-technical
-      - file: content/course/showcase
-      - file: content/course/syllabus
+          - file: course/resources/1-accounts
+          - file: course/resources/2-textbooks
+          - file: course/resources/3-technical
+      - file: course/showcase
+      - file: course/syllabus
   - caption: Textbook
     chapters:
-      - file: content/about
-      - file: content/ch00/index
+      - file: about
+      - file: ch00/index
         sections:
-          - file: content/ch00/00
-          - file: content/ch00/01
-          - file: content/ch00/02
-          - file: content/ch00/03
-      - file: content/ch01/index
+          - file: ch00/00
+          - file: ch00/01
+          - file: ch00/02
+          - file: ch00/03
+      - file: ch01/index
         sections:
-          - file: content/ch01/00
-          - file: content/ch01/01
-          - file: content/ch01/02
-          - file: content/ch01/03
-          - file: content/ch01/04
-          - file: content/ch01/05
-          - file: content/ch01/06
-      - file: content/ch02/index
+          - file: ch01/00
+          - file: ch01/01
+          - file: ch01/02
+          - file: ch01/03
+          - file: ch01/04
+          - file: ch01/05
+          - file: ch01/06
+      - file: ch02/index
         sections:
-          - file: content/ch02/00
-          - file: content/ch02/01
-          - file: content/ch02/02
-          - file: content/ch02/03
-          - file: content/ch02/04
-          - file: content/ch02/05
-          - file: content/ch02/06
-      - file: content/ch03/index
+          - file: ch02/00
+          - file: ch02/01
+          - file: ch02/02
+          - file: ch02/03
+          - file: ch02/04
+          - file: ch02/05
+          - file: ch02/06
+      - file: ch03/index
         sections:
-          - file: content/ch03/00
-          - file: content/ch03/01
-          - file: content/ch03/02
-          - file: content/ch03/03
-          - file: content/ch03/04
-          - file: content/ch03/05
-          - file: content/ch03/06
-      - file: content/ch04/index
+          - file: ch03/00
+          - file: ch03/01
+          - file: ch03/02
+          - file: ch03/03
+          - file: ch03/04
+          - file: ch03/05
+          - file: ch03/06
+      - file: ch04/index
         sections:
-          - file: content/ch04/00
-          - file: content/ch04/01
-          - file: content/ch04/02
-          - file: content/ch04/03
-          - file: content/ch04/04
-          - file: content/ch04/05
-          - file: content/ch04/06
-      - file: content/ch05/index
+          - file: ch04/00
+          - file: ch04/01
+          - file: ch04/02
+          - file: ch04/03
+          - file: ch04/04
+          - file: ch04/05
+          - file: ch04/06
+      - file: ch05/index
         sections:
-          - file: content/ch05/00
-          - file: content/ch05/01
-          - file: content/ch05/02
-          - file: content/ch05/03
-          - file: content/ch05/04
-          - file: content/ch05/05
-          - file: content/ch05/06
-          - file: content/ch05/07
-          - file: content/ch05/08
-          - file: content/ch05/09
-      - file: content/ch06/index
+          - file: ch05/00
+          - file: ch05/01
+          - file: ch05/02
+          - file: ch05/03
+          - file: ch05/04
+          - file: ch05/05
+          - file: ch05/06
+          - file: ch05/07
+          - file: ch05/08
+          - file: ch05/09
+      - file: ch06/index
         sections:
-          - file: content/ch06/00
-          - file: content/ch06/01
-          - file: content/ch06/02
-          - file: content/ch06/03
-          - file: content/ch06/04
-          - file: content/ch06/05
-          - file: content/ch06/06
-          - file: content/ch06/07
-          - file: content/ch06/08
-          - file: content/ch06/09
-          - file: content/ch06/10
-      - file: content/ch07/index
+          - file: ch06/00
+          - file: ch06/01
+          - file: ch06/02
+          - file: ch06/03
+          - file: ch06/04
+          - file: ch06/05
+          - file: ch06/06
+          - file: ch06/07
+          - file: ch06/08
+          - file: ch06/09
+          - file: ch06/10
+      - file: ch07/index
         sections:
-          - file: content/ch07/00
-          - file: content/ch07/01
-          - file: content/ch07/02
-          - file: content/ch07/03
-          - file: content/ch07/04
-          - file: content/ch07/05
-          - file: content/ch07/06
-          - file: content/ch07/07
-      - file: content/ch08/index
+          - file: ch07/00
+          - file: ch07/01
+          - file: ch07/02
+          - file: ch07/03
+          - file: ch07/04
+          - file: ch07/05
+          - file: ch07/06
+          - file: ch07/07
+      - file: ch08/index
         sections:
-          - file: content/ch08/00
-          - file: content/ch08/01
-          - file: content/ch08/02
-          - file: content/ch08/03
-          - file: content/ch08/04
-          - file: content/ch08/05
-          - file: content/ch08/06
-          - file: content/ch08/07
-          - file: content/ch08/08
-          - file: content/ch08/09
-      - file: content/ch09/index
+          - file: ch08/00
+          - file: ch08/01
+          - file: ch08/02
+          - file: ch08/03
+          - file: ch08/04
+          - file: ch08/05
+          - file: ch08/06
+          - file: ch08/07
+          - file: ch08/08
+          - file: ch08/09
+      - file: ch09/index
         sections:
-          - file: content/ch09/00
-          - file: content/ch09/01
-          - file: content/ch09/02
-          - file: content/ch09/03
-          - file: content/ch09/04
-          - file: content/ch09/05
-          - file: content/ch09/06
-          - file: content/ch09/07
-          - file: content/ch09/08
-          - file: content/ch09/09
-          - file: content/ch09/10
-          - file: content/ch09/11
-          - file: content/ch09/12
-      - file: content/ch10/index
+          - file: ch09/00
+          - file: ch09/01
+          - file: ch09/02
+          - file: ch09/03
+          - file: ch09/04
+          - file: ch09/05
+          - file: ch09/06
+          - file: ch09/07
+          - file: ch09/08
+          - file: ch09/09
+          - file: ch09/10
+          - file: ch09/11
+          - file: ch09/12
+      - file: ch10/index
         sections:
-          - file: content/ch10/00
-          - file: content/ch10/01
-          - file: content/ch10/02
-          - file: content/ch10/03
-          - file: content/ch10/04
-          - file: content/ch10/05
-          - file: content/ch10/06
-          - file: content/ch10/07
-          - file: content/ch10/08
-      - file: content/ch11/index
-      - file: content/ch12/index
-      - file: content/ch13/index
-      - file: content/ch14/index
-      - file: content/ch15/index
-      - file: content/ch16/index
-      - file: content/ch17/index
-      - file: content/ch18/index
-      - file: content/ch19/index
-      - file: content/reference/index
+          - file: ch10/00
+          - file: ch10/01
+          - file: ch10/02
+          - file: ch10/03
+          - file: ch10/04
+          - file: ch10/05
+          - file: ch10/06
+          - file: ch10/07
+          - file: ch10/08
+      - file: ch11/index
+      - file: ch12/index
+      - file: ch13/index
+      - file: ch14/index
+      - file: ch15/index
+      - file: ch16/index
+      - file: ch17/index
+      - file: ch18/index
+      - file: ch19/index
+      - file: reference/index
         sections:
-          - file: content/pyquist/Overview
+          - file: pyquist/Overview
             sections:
-              - file: content/pyquist/api/audio
-              - file: content/pyquist/api/score
-              - file: content/pyquist/api/plot
-              - file: content/pyquist/api/device
-              - file: content/pyquist/api/helper
-              - file: content/pyquist/api/web
-          - file: content/appendix/intro
+              - file: pyquist/api/audio
+              - file: pyquist/api/score
+              - file: pyquist/api/plot
+              - file: pyquist/api/device
+              - file: pyquist/api/helper
+              - file: pyquist/api/web
+          - file: appendix/intro
             sections:
-              - file: content/appendix/Math
-              - file: content/appendix/Python
-          - file: content/references
-          - file: content/glossary
-          - file: content/errata
-          - file: content/license
+              - file: appendix/Math
+              - file: appendix/Python
+          - file: references
+          - file: glossary
+          - file: errata
+          - file: license
   - caption: Templates
     chapters:
-      - file: content/template-notebook
-      - file: content/template-md
-      - file: content/template-interactive/index
-      - file: content/template-animation/index
+      - file: template-notebook
+      - file: template-md
+      - file: template-interactive/index
+      - file: template-animation/index

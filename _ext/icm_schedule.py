@@ -5,7 +5,7 @@ Each non-blank body line is a week band (no ``|``) or a day row::
     :::{schedule}
     Week 2
     [blue] Mon Aug 31 | [Assignment 1: Hello Pyquist and Synthesis (due)](assignments/01.md)
-    Tue Sep 01 | **02A** · Additive synthesis, wavetables, and basic waveforms | [Ch. 3](/content/ch03/index.md)
+    Tue Sep 01 | **02A** · Additive synthesis, wavetables, and basic waveforms | [Ch. 3](/ch03/index.md)
     :::
 
 Day rows are ``[color] date | topic [| readings]``; topic and readings are

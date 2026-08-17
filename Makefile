@@ -156,13 +156,17 @@ book: check-thebe-fork sync-pyquist-readme wheels vendor-thebe vendor-pyodide
 	@# PIP_DISABLE_PIP_VERSION_CHECK: keeps pip's "new release" notice out of
 	@# baked %pip cell output. ICM_BOOK_BUILD: kernel-only preview cells
 	@# guard on this and build nothing.
-	PIP_DISABLE_PIP_VERSION_CHECK=1 ICM_BOOK_BUILD=1 jupyter-book build ./
+	@# content/ is the sourcedir so published URLs carry no content/ prefix;
+	@# --toc must be absolute because sphinx-external-toc resolves relative
+	@# paths against the sourcedir.
+	PIP_DISABLE_PIP_VERSION_CHECK=1 ICM_BOOK_BUILD=1 jupyter-book build content/ \
+		--path-output "$(CURDIR)" --config "$(CURDIR)/_config.yml" --toc "$(CURDIR)/_toc.yml"
 	@# Sphinx doesn't track files referenced by raw <img>/<audio>/<video>
 	@# HTML tags, so copy each chapter's assets and pre-rendered anim clips
-	@# into the build output ourselves.
+	@# into the build output ourselves (dest drops the content/ prefix).
 	@for d in content/ch*/assets content/ch*/anim content/template-animation/anim; do \
 		[ -d "$$d" ] || continue; \
-		dest="_build/html/$$(dirname $$d)"; \
+		dest="_build/html/$$(dirname "$${d#content/}")"; \
 		mkdir -p "$$dest"; \
 		cp -R "$$d" "$$dest/"; \
 	done
@@ -177,7 +181,9 @@ serve: book
 	python -m http.server --directory _build/html/
 
 check:
-	jupyter-book build ./ --builder linkcheck
+	jupyter-book build content/ --path-output "$(CURDIR)" --config "$(CURDIR)/_config.yml" \
+		--toc "$(CURDIR)/_toc.yml" --builder linkcheck
 
 pdf:
-	jupyter-book build ./ --builder pdflatex
+	jupyter-book build content/ --path-output "$(CURDIR)" --config "$(CURDIR)/_config.yml" \
+		--toc "$(CURDIR)/_toc.yml" --builder pdflatex

@@ -115,10 +115,17 @@ sphinx:
     nb_code_prompt_hide: "Hide setup"
 
     # 404.html: served by GitHub Pages for unknown URLs. vendor/ holds the
-    # live-code runtime — the thebe bundles must NOT live in _static (every
-    # _static .js is auto-registered as a page script), and the service
-    # worker must sit at the site root for root scope.
-    html_extra_path: ["404.html", "vendor"]
+    # live-code runtime — the thebe bundles must NOT live in _static, and the
+    # service worker must sit at the site root for root scope. Paths are
+    # relative to the sourcedir (content/), hence the ../.
+    html_extra_path: ["../404.html", "../vendor"]
+    # The sourcedir is content/, so jupyter-book's auto-wiring of a
+    # sourcedir-level _static never fires; register the repo-root _static and
+    # its stylesheets explicitly. custom.css stays last so it wins ties.
+    html_static_path: ["../_static"]
+    html_css_files:
+      - live-cells.css
+      - custom.css
 
     # ---- Autodoc / Napoleon -----------------------------------------------
     autodoc_member_order: "bysource"   # follow source order, not alphabetical
@@ -159,6 +166,7 @@ sphinx:
       # Button-free live code: editors mount at page load, the kernel stack
       # loads on the first Run. live-cells.css pairs with it.
       - live-cells.js
+      - page-toc.js
     thebe_config:
       use_thebe_lite: true
       # The extension would copy book SOURCE files into _build/html for the
@@ -203,7 +211,7 @@ sphinx:
       extrapackages: "\\usepackage{cancel,color}\n\\usepackage{epigrafica}\n"
       preamble: \input{colormap.tex.txt}
       tableofcontents: ""
-    latex_additional_files: ["colormap.tex.txt", "Alon.cls", "epigrafica.sty"]
+    latex_additional_files: ["../colormap.tex.txt", "../Alon.cls", "../epigrafica.sty"]
     latex_docclass:
       howto: "alon"
       manual: "alon"
@@ -216,4 +224,4 @@ latex:
     targetname: icmbook.tex
 
 bibtex_bibfiles:
-  - content/references.bib
+  - references.bib

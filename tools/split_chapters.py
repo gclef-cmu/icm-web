@@ -774,7 +774,7 @@ def split_chapter(folder: Path) -> dict | None:
             (out_dir / f"{i:02d}.ipynb").write_text(nbformat.writes(nb) + "\n")
         else:
             (out_dir / f"{i:02d}.md").write_text(section_md)
-        section_refs.append(f"content/ch{chapter_num:02d}/{i:02d}")
+        section_refs.append(f"ch{chapter_num:02d}/{i:02d}")
 
     for sub in ("assets", "code", "figures"):
         src_sub = folder / sub
@@ -785,7 +785,7 @@ def split_chapter(folder: Path) -> dict | None:
 
     return {
         "chapter_num": chapter_num,
-        "index": f"content/ch{chapter_num:02d}/index",
+        "index": f"ch{chapter_num:02d}/index",
         "sections": section_refs,
         "slug": folder.name,
         "title": chapter_title,
@@ -794,9 +794,9 @@ def split_chapter(folder: Path) -> dict | None:
 
 
 def regenerate_toc(results: list[dict]) -> None:
-    """Rewrite the chapter entries (content/ch*/) of _toc.yml in place.
+    """Rewrite the chapter entries (ch*/) of _toc.yml in place.
 
-    Replaces only the contiguous run of `- file: content/chNN/index` entries
+    Replaces only the contiguous run of `- file: chNN/index` entries
     (with their nested `sections:`) inside the "Textbook" part; the hand-
     maintained scaffold around it (captions, templates, reference subtree)
     is preserved.
@@ -809,10 +809,10 @@ def regenerate_toc(results: list[dict]) -> None:
 
     starts = [
         i for i, l in enumerate(lines)
-        if l.lstrip().startswith("- file: content/ch") and l.rstrip().endswith("/index")
+        if l.lstrip().startswith("- file: ch") and l.rstrip().endswith("/index")
     ]
     if not starts:
-        sys.exit("could not locate chapter entries (content/ch*/index) in _toc.yml")
+        sys.exit("could not locate chapter entries (ch*/index) in _toc.yml")
     start = starts[0]
     base = indent(lines[start])
 
@@ -823,7 +823,7 @@ def regenerate_toc(results: list[dict]) -> None:
             continue  # blank lines inside the run are dropped
         ind = indent(l)
         is_sibling_file = ind == base and l.lstrip().startswith("- file:")
-        if ind < base or (is_sibling_file and not l.lstrip().startswith("- file: content/ch")):
+        if ind < base or (is_sibling_file and not l.lstrip().startswith("- file: ch")):
             end = j
             break
 
@@ -847,8 +847,8 @@ def natural_key(name: str):
 
 
 def _toc_ref(path: Path) -> str:
-    """content/course/assignments/01.md -> 'content/course/assignments/01' (TOC file ref)."""
-    return "content/" + path.relative_to(CONTENT).with_suffix("").as_posix()
+    """content/course/assignments/01.md -> 'course/assignments/01' (TOC file ref)."""
+    return path.relative_to(CONTENT).with_suffix("").as_posix()
 
 
 def course_order_key(path: Path):

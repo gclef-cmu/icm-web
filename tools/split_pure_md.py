@@ -227,7 +227,7 @@ def split_chapter(folder: Path) -> dict | None:
         if body_text:
             section_md += f"\n{body_text}\n"
         (out_dir / f"{i:02d}.md").write_text(section_md)
-        section_refs.append(f"content/ch{chapter_num:02d}/{i:02d}")
+        section_refs.append(f"ch{chapter_num:02d}/{i:02d}")
 
     for sub in ("assets", "code", "figures"):
         src_sub = folder / sub
@@ -236,7 +236,7 @@ def split_chapter(folder: Path) -> dict | None:
 
     return {
         "chapter_num": chapter_num,
-        "index": f"content/ch{chapter_num:02d}/index",
+        "index": f"ch{chapter_num:02d}/index",
         "sections": section_refs,
         "slug": folder.name,
         "title": chapter_title,
@@ -246,14 +246,14 @@ def split_chapter(folder: Path) -> dict | None:
 
 def regenerate_toc(results: list[dict]) -> None:
     """Replace the chapter parts block of _toc.yml (the first `- chapters:`
-    entry referencing content/ch); other parts are left untouched."""
+    entry referencing ch); other parts are left untouched."""
     text = TOC.read_text()
     lines = text.splitlines()
     parts_starts = [i for i, l in enumerate(lines) if l.rstrip() == "  - chapters:"]
     chapter_start = chapter_end = None
     for idx, start in enumerate(parts_starts):
         end = parts_starts[idx + 1] if idx + 1 < len(parts_starts) else len(lines)
-        if any("content/ch" in lines[j] for j in range(start, end)):
+        if any("- file: ch" in lines[j] for j in range(start, end)):
             chapter_start, chapter_end = start, end
             break
     if chapter_start is None:

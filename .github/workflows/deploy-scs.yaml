@@ -69,9 +69,15 @@ jobs:
 
       # SCS runs plain Apache: serving 404.html for unknown URLs is a GitHub
       # Pages convention, so point Apache at it explicitly. Written here, not
-      # committed to the repo, to keep it out of the Pages artifact.
-      - name: Add .htaccess for custom 404 (SCS Apache)
-        run: printf 'ErrorDocument 404 /~15322/404.html\n' > _build/html/.htaccess
+      # committed to the repo, to keep it out of the Pages artifact. The
+      # redirect keeps pre-August-2026 /content/ deep links working (scp
+      # never deletes, so the stale content/ tree on AFS is masked, not gone).
+      - name: Add .htaccess for custom 404 + legacy /content/ redirect (SCS Apache)
+        run: |
+          printf '%s\n' \
+            'ErrorDocument 404 /~15322/404.html' \
+            'RedirectMatch 301 "^/~15322/content(/.*)?$" "/~15322$1"' \
+            > _build/html/.htaccess
 
       - name: Copy site to SCS AFS dir
         uses: appleboy/scp-action@v1
