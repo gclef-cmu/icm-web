@@ -162,6 +162,16 @@ parts:
           - file: content/ch09/11
           - file: content/ch09/12
       - file: content/ch10/index
+        sections:
+          - file: content/ch10/00
+          - file: content/ch10/01
+          - file: content/ch10/02
+          - file: content/ch10/03
+          - file: content/ch10/04
+          - file: content/ch10/05
+          - file: content/ch10/06
+          - file: content/ch10/07
+          - file: content/ch10/08
       - file: content/ch11/index
       - file: content/ch12/index
       - file: content/ch13/index

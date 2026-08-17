@@ -7,3 +7,5 @@ Armed with these tools, we can now study sampling from the perspective of the fr
 1. What, if anything, do we lose when we sample a sound?
 1. Can we sample in a way that permits _perfect reconstruction_ of the original sound?
 1. What sample rates and bit depths should we actually use?
+
+(sec-sampling-and-frequency)=
