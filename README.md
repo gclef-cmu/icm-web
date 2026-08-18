@@ -4,14 +4,14 @@ Source for **CMU Intro to Computer Music**, the 15-322 / 15-622 textbook and
 course site at Carnegie Mellon University, built with
 [Jupyter Book](https://jupyterbook.org).
 
-This repo is **public** and stays public. Course source material lives in
-private submodules; the site's pages are generated from them at build time
-and are not committed here.
+This repo is **public** and stays public. The site's pages are generated at
+build time from submodules and are not committed here.
 
 ## Submodules
 
-- **`icm-text/`** (private) — chapter prose, the source of truth.
-  `make split` derives `content/ch*/` from it.
+- **`icm-text/`** (public) — chapter prose, the source of truth
+  ([`chrisdonahue/pcm`](https://github.com/chrisdonahue/pcm); the submodule
+  path keeps the pre-rename name). `make split` derives `content/ch*/` from it.
 - **`icm-f26/`** (private) — the course website (schedule, assignments,
   resources). `make split` mirrors it into `content/course/`.
 - **`pyquist/`** (public) — the course audio library
@@ -21,7 +21,7 @@ and are not committed here.
 ## Build
 
 ```sh
-git clone --recurse-submodules <repo-url>   # private submodules need access
+git clone --recurse-submodules <repo-url>   # icm-f26 is private, needs access
 conda env create -f environment.yml         # installs pyquist from ./pyquist
 conda activate icmbook
 
@@ -165,17 +165,24 @@ through video and update both definitions.
 
 Pushing to `main` triggers `.github/workflows/deploy-book.yml` (GitHub
 Pages) and `deploy-scs.yaml` (SCS mirror); both can also be run from the
-Actions tab. CI fetches pyquist anonymously and icm-text / icm-f26 at their
-**pinned SHAs** using the `ICM_TEXT_READ_TOKEN` and `ICM_F26_READ_TOKEN`
-secrets (fine-grained read PATs — they expire, which breaks the fetch step
-until renewed), then runs `make split` and `make book`. CI installs no
+Actions tab. CI fetches pyquist and icm-text anonymously (both public) and
+icm-f26 at its **pinned SHA** using the `ICM_F26_READ_TOKEN` secret (a
+fine-grained read PAT — it expires, which breaks the fetch step until
+renewed), then runs `make split` and `make book`. CI installs no
 manim/TeX: it reuses the committed animation clips. All live-code artifacts
 are built in CI too — nothing generated is committed except those clips.
+
+Both jobs time out after 20 minutes (a hung runner otherwise burns the 6 h
+default). Before its scp, deploy-scs resolves the SCS hostname with retries
+and public-resolver fallbacks and pins it in `/etc/hosts` — runners
+intermittently fail DNS lookups to CMU. Never re-run a **failed deploy-book
+run**: the duplicate Pages artifact breaks the deploy step; dispatch a fresh
+run instead (`gh workflow run deploy-book.yml`).
 
 ## Layout
 
 ```
-icm-text/    chapter prose (private submodule, source of truth)
+icm-text/    chapter prose (public pcm submodule, source of truth)
 icm-f26/     course website (private submodule; mirrored to content/course/)
 pyquist/     audio library (public submodule)
 tools/       split/merge scripts, icm_anim, icm_widgets, browser stubs

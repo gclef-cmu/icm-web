@@ -101,9 +101,11 @@ jobs:
           host="${{ secrets.SCS_HOSTNAME }}"
           for i in $(seq 1 10); do
             for cmd in "getent ahostsv4 $host" \
-                       "dig +short +time=3 @1.1.1.1 $host A" \
-                       "dig +short +time=3 @8.8.8.8 $host A"; do
-              ip=$($cmd 2>/dev/null | grep -Eom1 '^[0-9]+\.[0-9.]+')
+                       "dig +short +time=3 +tries=1 @1.1.1.1 $host A" \
+                       "dig +short +time=3 +tries=1 @8.8.8.8 $host A"; do
+              # || true: the job shell runs bash -e, which would kill the
+              # script on the first failed lookup instead of retrying.
+              ip=$($cmd 2>/dev/null | grep -Eom1 '^([0-9]{1,3}\.){3}[0-9]{1,3}' || true)
               if [ -n "$ip" ]; then
                 echo "$ip $host" | sudo tee -a /etc/hosts >/dev/null
                 exit 0
