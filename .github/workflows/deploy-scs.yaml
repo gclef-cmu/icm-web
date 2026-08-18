@@ -90,6 +90,30 @@ jobs:
             'RedirectMatch 301 "^/~15322/content(/.*)?$" "/~15322$1"' \
             > _build/html/.htaccess
 
+      # Runners fail resolving the SCS host when the Azure→CMU DNS path drops
+      # queries (repeatedly on Aug 18 2026), and drone-scp does a single lookup
+      # with no retry. Resolve here with retries — public resolvers as fallback
+      # reach CMU from outside Azure — and pin the answer in /etc/hosts so the
+      # scp step below needs no lookup at all. No echo: the IP would hint at
+      # the masked hostname secret.
+      - name: Resolve and pin SCS host DNS (runners flake on this lookup)
+        run: |
+          host="${{ secrets.SCS_HOSTNAME }}"
+          for i in $(seq 1 10); do
+            for cmd in "getent ahostsv4 $host" \
+                       "dig +short +time=3 @1.1.1.1 $host A" \
+                       "dig +short +time=3 @8.8.8.8 $host A"; do
+              ip=$($cmd 2>/dev/null | grep -Eom1 '^[0-9]+\.[0-9.]+')
+              if [ -n "$ip" ]; then
+                echo "$ip $host" | sudo tee -a /etc/hosts >/dev/null
+                exit 0
+              fi
+            done
+            sleep 5
+          done
+          echo "SCS hostname never resolved" >&2
+          exit 1
+
       - name: Copy site to SCS AFS dir
         uses: appleboy/scp-action@v1
         with:
