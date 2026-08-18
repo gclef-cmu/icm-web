@@ -146,8 +146,10 @@ html[data-theme="dark"] {
 /* Long bare URLs (submission links etc.) can't fill a justified line and
    stretch the words around them into gaps. word-break (not overflow-wrap:
    anywhere, which only breaks on overflow) makes every character a break
-   opportunity, so the justifier can fill the line up to the URL. */
-.bd-article a.reference.external {
+   opportunity, so the justifier can fill the line up to the URL. Scoped to
+   links whose text IS the URL (_ext/icm_linkstyle tags them) — on prose
+   links it would break words mid-word. */
+.bd-article a.bare-url {
   word-break: break-all;
 }
 

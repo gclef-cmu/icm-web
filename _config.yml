@@ -97,6 +97,7 @@ sphinx:
   #   icm_interactive — the {interactive} directive (live companion notebooks)
   #   icm_animation   — the {animation} directive (watch-only manim clips)
   #   icm_schedule    — the {schedule} directive (course schedule table)
+  #   icm_linkstyle   — tags bare-URL links (class bare-url) for line-breaking CSS
   local_extensions:
     icm_roles: _ext/
     icm_glossary: _ext/
@@ -106,6 +107,7 @@ sphinx:
     icm_interactive: _ext/
     icm_animation: _ext/
     icm_schedule: _ext/
+    icm_linkstyle: _ext/
   config:
     # A notebook execution error is only a warning by default, which lets a
     # broken page deploy — fail the build instead.
