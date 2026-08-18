@@ -6,7 +6,7 @@
 	branch = browser-recording
 [submodule "icm-text"]
 	path = icm-text
-	url = git@github.com:chrisdonahue/icm-text.git
+	url = git@github.com:chrisdonahue/pcm.git
 	branch = main
 [submodule "icm-f26"]
 	path = icm-f26
