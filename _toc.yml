@@ -9,10 +9,12 @@ parts:
       - file: course/home
       - file: course/about
       - file: course/schedule
-      - file: course/assignments/01
-        title: "Assignment 1"
-      - file: course/assignments/02
-        title: "Assignment 2"
+      - file: course/assignments/index
+        sections:
+          - file: course/assignments/01
+            title: "Assignment 1"
+          - file: course/assignments/02
+            title: "Assignment 2"
       - file: course/resources/index
         sections:
           - file: course/resources/1-accounts
@@ -20,6 +22,14 @@ parts:
           - file: course/resources/3-technical
       - file: course/showcase
       - file: course/syllabus
+      - file: pyquist/Overview
+        sections:
+          - file: pyquist/api/audio
+          - file: pyquist/api/score
+          - file: pyquist/api/plot
+          - file: pyquist/api/device
+          - file: pyquist/api/helper
+          - file: pyquist/api/web
   - caption: Textbook
     chapters:
       - file: book/index
@@ -149,14 +159,6 @@ parts:
       - file: book/ch19/index
       - file: book/reference/index
         sections:
-          - file: book/pyquist/Overview
-            sections:
-              - file: book/pyquist/api/audio
-              - file: book/pyquist/api/score
-              - file: book/pyquist/api/plot
-              - file: book/pyquist/api/device
-              - file: book/pyquist/api/helper
-              - file: book/pyquist/api/web
           - file: book/appendix/intro
             sections:
               - file: book/appendix/Math
@@ -165,8 +167,13 @@ parts:
           - file: book/glossary
           - file: book/errata
           - file: book/license
+  # The Templates part stays in the TOC (unlisting it breaks Sphinx's
+  # figure/theorem numbering on those pages) but is hidden from the sidebar
+  # and prev/next pagination by rules in _static/custom.css. Entry point for
+  # humans: the unlinked /templates/ hub page.
   - caption: Templates
     chapters:
+      - file: templates/index
       - file: template-notebook
       - file: template-md
       - file: template-interactive/index

@@ -94,7 +94,7 @@ jobs:
             'ErrorDocument 404 /~15322/404.html' \
             'RedirectMatch 301 "^/~15322/?$" "/~15322/course/home.html"' \
             'RedirectMatch 301 "^/~15322/about\.html$" "/~15322/book/"' \
-            'RedirectMatch 301 "^/~15322/(ch[0-9][0-9]|reference|pyquist|appendix|errata|glossary|license|references)((/|\.).*)?$" "/~15322/book/$1$2"' \
+            'RedirectMatch 301 "^/~15322/(ch[0-9][0-9]|reference|appendix|errata|glossary|license|references)((/|\.).*)?$" "/~15322/book/$1$2"' \
             'RedirectMatch 301 "^/~15322/content(/.*)?$" "/~15322$1"' \
             > _build/html/.htaccess
 

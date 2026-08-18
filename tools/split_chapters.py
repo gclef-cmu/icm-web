@@ -54,6 +54,29 @@ COURSE_SKIP_DIRS = {("assignments", "harry")}
 COURSE_CAPTION = "- caption: Course Information"
 # Sidebar order for course pages/sections; anything not listed sorts after.
 COURSE_ORDER = ("home", "about", "schedule", "assignments", "resources", "showcase")
+# Unreleased assignments stage in icm-f26's harry/ dir. They mirror to
+# content/course/harry/ — an instructor preview at the unlinked
+# /course/harry/ URL (sibling of the released assignments). The pages build
+# as orphans with `nosearch`: no TOC part, no sidebar/pagination presence,
+# no search hits — knowing the URL is the only way in. (The name is still
+# readable here in the public repo; accepted trade-off.)
+STAGING_SOURCE = COURSE_SOURCE / "assignments" / "harry"
+STAGING_DEST = COURSE_DEST / "harry"
+# Only for removing the part older revisions generated into _toc.yml.
+STAGING_CAPTION = "- caption: Harry"
+
+# Appended after the mirrored icm-f26 pages: the Pyquist docs (generated at
+# content/pyquist/, outside the course/ wipe) sit last in the Course part.
+PYQUIST_TOC_TAIL = [
+    "      - file: pyquist/Overview",
+    "        sections:",
+    "          - file: pyquist/api/audio",
+    "          - file: pyquist/api/score",
+    "          - file: pyquist/api/plot",
+    "          - file: pyquist/api/device",
+    "          - file: pyquist/api/helper",
+    "          - file: pyquist/api/web",
+]
 
 CHAPTER_FOLDER_RE = re.compile(r"^(\d+)-(.+)$")
 FRONTMATTER_RE = re.compile(r"\A---\n.*?\n---\n", re.DOTALL)
@@ -893,25 +916,21 @@ def _toc_entry(path: Path, indent: str) -> list[str]:
     return lines
 
 
-def regenerate_course_toc() -> None:
-    """Replace the "Course Information" part of _toc.yml from content/course/.
+def part_entries(root: Path, key) -> list[str]:
+    """TOC `chapters:` lines for one mirrored directory tree.
 
-    One captioned part: top-level pages become flat `file:` entries; a
-    subdirectory's index.md becomes a `file:` with its remaining pages nested
-    under `sections:` (a subdir without an index.md is listed flat). A
-    second-level subdirectory with an index.md (e.g. assignments/05/) nests
-    its remaining pages one level deeper under that index. Every entry whose
-    H1 contains a colon gets a `title:` override truncated at that colon, so
-    the sidebar shows short labels ("Assignment 6") while pages keep their
-    full titles. The part spans from the caption to the next `- caption:`;
-    other parts are untouched.
+    Top-level pages become flat `file:` entries; a subdirectory's index.md
+    becomes a `file:` with its remaining pages nested under `sections:` (a
+    subdir without an index.md is listed flat). A second-level subdirectory
+    with an index.md (e.g. assignments/05/) nests its remaining pages one
+    level deeper under that index. Every entry whose H1 contains a colon
+    gets a `title:` override truncated at that colon, so the sidebar shows
+    short labels ("Assignment 6") while pages keep their full titles.
     """
     entries = sorted(
-        (p for p in COURSE_DEST.iterdir() if p.is_dir() or p.suffix == ".md"),
-        key=course_order_key,
+        (p for p in root.iterdir() if p.is_dir() or p.suffix == ".md"), key=key
     )
-
-    body = ["  - caption: Course Information", "    chapters:"]
+    body: list[str] = []
     for p in entries:
         if not p.is_dir():
             body += _toc_entry(p, "      ")
@@ -946,19 +965,40 @@ def regenerate_course_toc() -> None:
         else:
             for s in sections:
                 body += _toc_entry(s, "      ")
+    return body
 
+
+def replace_toc_part(caption: str, body: list[str] | None, required: bool = False) -> None:
+    """Replace one captioned part of _toc.yml in place.
+
+    The part spans from its caption line to the next `- caption:`; other
+    parts are untouched. A missing caption appends the part at the end
+    (or errors when required); body None removes the part entirely.
+    """
     lines = TOC.read_text().splitlines()
-    try:
-        cap_idx = next(i for i, l in enumerate(lines) if l.strip() == COURSE_CAPTION)
-    except StopIteration:
-        sys.exit(f'could not locate "{COURSE_CAPTION}" in _toc.yml')
-    end = next(
-        (j for j in range(cap_idx + 1, len(lines))
-         if lines[j].lstrip().startswith("- caption:")),
-        len(lines),
-    )
-    new_lines = lines[:cap_idx] + body + lines[end:]
+    cap_idx = next((i for i, l in enumerate(lines) if l.strip() == caption), None)
+    if cap_idx is None:
+        if required:
+            sys.exit(f'could not locate "{caption}" in _toc.yml')
+        if body is None:
+            return
+        new_lines = lines + body
+    else:
+        end = next(
+            (j for j in range(cap_idx + 1, len(lines))
+             if lines[j].lstrip().startswith("- caption:")),
+            len(lines),
+        )
+        new_lines = lines[:cap_idx] + (body or []) + lines[end:]
     TOC.write_text("\n".join(new_lines) + "\n")
+
+
+def regenerate_course_toc() -> None:
+    """Rebuild the "Course Information" part from content/course/ + the Pyquist tail."""
+    body = ["  " + COURSE_CAPTION, "    chapters:"]
+    body += part_entries(COURSE_DEST, course_order_key)
+    body += PYQUIST_TOC_TAIL
+    replace_toc_part(COURSE_CAPTION, body, required=True)
 
 
 def mirror_course() -> None:
@@ -1017,6 +1057,43 @@ def print_course_tree() -> None:
 
     print(f"  {COURSE_DEST.relative_to(REPO)}/")
     walk(COURSE_DEST, "")
+
+
+def with_hidden_metadata(text: str) -> str:
+    """Front-matter `orphan` + `nosearch`: the page builds outside every
+    toctree (no sidebar or prev/next anywhere, no missing-toctree warning)
+    and site search never surfaces it."""
+    if text.startswith("---\n"):
+        return text.replace("---\n", "---\norphan: true\nnosearch: true\n", 1)
+    return "---\norphan: true\nnosearch: true\n---\n\n" + text
+
+
+def mirror_staging() -> None:
+    """Mirror icm-f26's staging dir into content/course/harry/ (see STAGING_SOURCE).
+
+    The pages are deliberately NOT added to _toc.yml — they build as
+    orphans, reachable only by URL. Must run AFTER mirror_course, which
+    wipes content/course/ wholesale (clearing the previous mirror).
+    """
+    replace_toc_part(STAGING_CAPTION, None)
+    if STAGING_DEST.exists():
+        shutil.rmtree(STAGING_DEST)
+    if not STAGING_SOURCE.exists() or not any(STAGING_SOURCE.iterdir()):
+        return
+
+    copied = 0
+    for src in sorted(STAGING_SOURCE.rglob("*")):
+        rel = src.relative_to(STAGING_SOURCE)
+        if src.is_dir() or any(part.startswith(".") for part in rel.parts):
+            continue
+        dest = STAGING_DEST / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if src.suffix == ".md":
+            dest.write_text(with_hidden_metadata(src.read_text()))
+        else:
+            shutil.copy2(src, dest)
+        copied += 1
+    print(f"  harry  {copied} file(s)  <- icm-f26/assignments/harry/  (-> /course/harry/, unlisted)")
 
 
 def sync_references() -> None:
@@ -1102,6 +1179,7 @@ def main() -> int:
     regenerate_toc(results)
     print(f"  updated {TOC.relative_to(REPO)}")
     mirror_course()
+    mirror_staging()
     sync_front_matter()
     sync_references()
     return 0

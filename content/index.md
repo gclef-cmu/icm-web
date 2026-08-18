@@ -1,6 +1,7 @@
 ---
-html_meta:
-  "http-equiv=refresh": "0; url=course/home.html"
+myst:
+  html_meta:
+    "http-equiv=refresh": "0; url=course/home.html"
 ---
 
 # CMU Intro to Computer Music

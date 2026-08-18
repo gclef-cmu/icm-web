@@ -11,7 +11,7 @@ build time from submodules and are not committed here.
 
 - **`icm-text/`** (public) — chapter prose, the source of truth
   ([`chrisdonahue/pcm`](https://github.com/chrisdonahue/pcm); the submodule
-  path keeps the pre-rename name). `make split` derives `content/ch*/` from it.
+  path keeps the pre-rename name). `make split` derives `content/book/ch*/` from it.
 - **`icm-f26/`** (private) — the course website (schedule, assignments,
   resources). `make split` mirrors it into `content/course/`.
 - **`pyquist/`** (public) — the course audio library
@@ -47,8 +47,21 @@ textbook's canonical home. The site root redirects to the course home page.
 `_toc.yml`. All of that is **gitignored**; the only committed part of the
 generated tree is the pre-rendered animation clips
 (`content/book/chNN/anim/*.mp4`). Hand-authored pages (`book/appendix/`,
-`book/pyquist/`, `book/reference/`, `index.md`, the templates) stay
-committed.
+`book/reference/`, `pyquist/`, `index.md`, the templates) stay committed.
+
+The Pyquist docs live at `content/pyquist/` (URL `/pyquist/`) and are listed
+as the last Course Information sidebar entry — `make split` appends that TOC
+tail. The Templates part stays in `_toc.yml` (Sphinx numbering needs it) but
+is hidden from the sidebar and pagination by rules in `_static/custom.css`;
+authors enter through the unlinked `/templates/` page.
+
+Unreleased assignments (icm-f26's `assignments/harry/`) mirror to the
+unlinked **`/course/harry/`** URL for instructor preview. The pages build as
+orphans (`orphan` + `nosearch` front matter injected at split; they never
+enter `_toc.yml`), so no page HTML, sidebar, pagination, or search result
+references them, and `make book` scrubs their names from `searchindex.js` —
+knowing the URL is the only way in. The pages are still public, and this
+paragraph names the URL: that trade-off is deliberate.
 
 Releasing content is a pin bump — CI runs `make split` itself:
 
@@ -68,7 +81,7 @@ edited scenes need the authoring stack locally (`pip install manim==0.20.1 &&
 pip install -e tools/icm_anim`, plus TeX for `MathTex`) — commit the new mp4s
 together with the pin bump, or CI fails the split asking for them.
 
-`make merge` is the inverse: reassembles `content/ch*/` into icm-text-shaped
+`make merge` is the inverse: reassembles `content/book/ch*/` into icm-text-shaped
 files (under `icm-text-merged/`) for PR'ing edits upstream, and self-checks
 the round-trip.
 
@@ -77,13 +90,13 @@ the round-trip.
 Pages are **MyST Markdown** (`.md`) or notebooks (`.ipynb`). Live references
 for every feature: `content/template-md.md` (prose) and
 `content/template-notebook.ipynb` (runnable code, audio, plots). Chapters are
-folders `content/chNN/` with one file per section; the section number lives
+folders `content/book/chNN/` with one file per section; the section number lives
 in each H1.
 
 ## Pyquist docs
 
 All Pyquist pages are generated — no hand-written API docs.
-`content/book/pyquist/Overview.md` mirrors the submodule README each build; the
+`content/pyquist/Overview.md` mirrors the submodule README each build; the
 `api/*.md` autodoc shells introspect the **installed** module (the editable
 install from `conda env create`). A failed import renders them silently
 empty (see Troubleshooting). Update by bumping the pin:

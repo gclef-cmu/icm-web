@@ -164,7 +164,7 @@ A **warning** — something that can go wrong.
 
 :::{seealso}
 A **see-also** — a pointer to related material, e.g. the
-{doc}`Pyquist reference <book/pyquist/Overview>`.
+{doc}`Pyquist reference <pyquist/Overview>`.
 :::
 
 :::{admonition} Custom title
@@ -193,7 +193,7 @@ A **warning** — something that can go wrong.
 
 :::{seealso}
 A **see-also** — a pointer to related material, e.g. the
-{doc}`Pyquist reference <book/pyquist/Overview>`.
+{doc}`Pyquist reference <pyquist/Overview>`.
 :::
 
 :::{admonition} Custom title
@@ -233,7 +233,7 @@ Source:
 
 ````markdown
 :::{audio}
-[A 440 Hz sine tone](./ch01/assets/audio-sine-440.wav)
+[A 440 Hz sine tone](./book/ch01/assets/audio-sine-440.wav)
 
 A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
 :::
@@ -242,7 +242,7 @@ A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
 Rendered:
 
 :::{audio}
-[A 440 Hz sine tone](./ch01/assets/audio-sine-440.wav)
+[A 440 Hz sine tone](./book/ch01/assets/audio-sine-440.wav)
 
 A 440 Hz sine tone, one second long, at $f_s = 44{,}100$ Hz.
 :::
@@ -275,9 +275,9 @@ the clips share a standalone image, else `audio-list`.) Source:
 
 ````markdown
 :::{audio-figure}
-{audio}`Clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>` ![A clean sine waveform](./ch01/assets/fig-sine-amplitude.png)
+{audio}`Clean 440 Hz sine <./book/ch01/assets/audio-sine-440.wav>` ![A clean sine waveform](./book/ch01/assets/fig-sine-amplitude.png)
 
-{audio}`Clipped 440 Hz sine <./ch01/assets/audio-clipped-sine.wav>` ![A clipped sine waveform](./ch01/assets/fig-clipping.png)
+{audio}`Clipped 440 Hz sine <./book/ch01/assets/audio-clipped-sine.wav>` ![A clipped sine waveform](./book/ch01/assets/fig-clipping.png)
 
 A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then compare its waveform.
 :::
@@ -286,9 +286,9 @@ A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then
 Rendered:
 
 :::{audio-figure}
-{audio}`Clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>` ![A clean sine waveform](./ch01/assets/fig-sine-amplitude.png)
+{audio}`Clean 440 Hz sine <./book/ch01/assets/audio-sine-440.wav>` ![A clean sine waveform](./book/ch01/assets/fig-sine-amplitude.png)
 
-{audio}`Clipped 440 Hz sine <./ch01/assets/audio-clipped-sine.wav>` ![A clipped sine waveform](./ch01/assets/fig-clipping.png)
+{audio}`Clipped 440 Hz sine <./book/ch01/assets/audio-clipped-sine.wav>` ![A clipped sine waveform](./book/ch01/assets/fig-clipping.png)
 
 A clean 440 Hz sine (left) and the same tone clipped (right) — play each, then compare its waveform.
 :::
@@ -297,9 +297,9 @@ A text-only list of examples uses `audio-list` instead:
 
 ````markdown
 :::{audio-list}
-{audio}`A clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>`
+{audio}`A clean 440 Hz sine <./book/ch01/assets/audio-sine-440.wav>`
 
-{audio}`The same tone, hard-clipped <./ch01/assets/audio-clipped-sine.wav>`
+{audio}`The same tone, hard-clipped <./book/ch01/assets/audio-clipped-sine.wav>`
 
 Two tones to compare by ear.
 :::
@@ -308,9 +308,9 @@ Two tones to compare by ear.
 Rendered:
 
 :::{audio-list}
-{audio}`A clean 440 Hz sine <./ch01/assets/audio-sine-440.wav>`
+{audio}`A clean 440 Hz sine <./book/ch01/assets/audio-sine-440.wav>`
 
-{audio}`The same tone, hard-clipped <./ch01/assets/audio-clipped-sine.wav>`
+{audio}`The same tone, hard-clipped <./book/ch01/assets/audio-clipped-sine.wav>`
 
 Two tones to compare by ear.
 :::
@@ -930,7 +930,7 @@ $$
 
 Use `{pyquist}` to mention a Pyquist symbol in prose. It renders the name as
 inline code spelled the way students write it (`pq.…`) and links it to the
-matching entry in the {doc}`Pyquist reference <book/pyquist/Overview>`. An unknown
+matching entry in the {doc}`Pyquist reference <pyquist/Overview>`. An unknown
 symbol warns at build time, so the prose and the library stay in sync.
 
 The display always shows valid, copy-pasteable code, so what you write and what
@@ -984,7 +984,7 @@ The schedule legend rides on these: :{blue}[**autograded**] ·
 :{pink}[**final project**] · :{gray}[breaks / no class].
 
 To color a link, append its target:
-:{pink}[**see the Glossary (due)**](glossary.md).
+:{pink}[**see the Glossary (due)**](book/glossary.md).
 
 As highlighter chips: :{blue-highlight}[autograded] ·
 :{orange-highlight}[exam] · :{gray-highlight}[breaks].
@@ -997,7 +997,7 @@ The schedule legend rides on these: :{blue}[**autograded**] ·
 :{pink}[**final project**] · :{gray}[breaks / no class].
 
 To color a link, append its target:
-:{pink}[**see the Glossary (due)**](glossary.md).
+:{pink}[**see the Glossary (due)**](book/glossary.md).
 
 As highlighter chips: :{blue-highlight}[autograded] ·
 :{orange-highlight}[exam] · :{gray-highlight}[breaks].

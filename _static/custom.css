@@ -1276,3 +1276,18 @@ html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(.audio
      would be invisible dark-on-dark. */
   color: inherit;
 }
+
+/* ======================================================================
+   Templates: authoring-only pages. The part must stay in the TOC (Sphinx
+   only numbers figures/theorems for docs reachable from the root toctree,
+   and sphinx_proof crashes on unnumbered {prf:ref} pages), so it is hidden
+   here instead: drop its sidebar section and keep the prev/next footer
+   from walking into it. Human entry point: the unlinked /templates/ page.
+   ====================================================================== */
+nav.bd-links p.caption:has(+ ul a[href$="templates/index.html"]),
+nav.bd-links p.caption:has(+ ul a[href$="templates/index.html"]) + ul {
+  display: none;
+}
+.prev-next-area a[href*="template"] {
+  display: none;
+}

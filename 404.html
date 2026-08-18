@@ -22,7 +22,7 @@
       // server-side (.htaccess); GitHub Pages has no server redirects, so
       // catch legacy URLs here before rendering the 404.
       var rest = location.pathname.slice(prefix.length);
-      var legacy = /^(?:content\/)?(ch[0-9][0-9]|reference|pyquist|appendix|errata|glossary|license|references)((\/|\.).*)?$/.exec(rest);
+      var legacy = /^(?:content\/)?(ch[0-9][0-9]|reference|appendix|errata|glossary|license|references)((\/|\.).*)?$/.exec(rest);
       if (/^(?:content\/)?about\.html$/.test(rest)) {
         location.replace(prefix + 'book/');
       } else if (legacy) {

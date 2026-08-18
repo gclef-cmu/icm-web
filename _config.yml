@@ -11,8 +11,15 @@ author: "Chris Donahue"
 email: "chrisdonahue@cmu.edu"
 copyright: "2026 Chris Donahue. All rights reserved."
 logo: ""                                  # path to a logo image, e.g. content/images/logo.png
-exclude_patterns: [_build, "**.ipynb_checkpoints"]
-only_build_toc_files: true
+# false so the orphaned /course/harry preview pages (see mirror_staging in
+# tools/split_chapters.py) build without appearing in _toc.yml. The extra
+# excludes are the complete set of non-page sources that would otherwise
+# build as stray documents: template main.md/notebooks/ inputs, the mirrored
+# Pyquist README fragment, and everything under assets/ (assignment starter
+# notebooks there deliberately raise when executed).
+exclude_patterns: [_build, "**.ipynb_checkpoints", "**/notebooks/**", "**/main.md",
+                   "**/assets/**", "pyquist/_pyquist_readme.md"]
+only_build_toc_files: false
 
 #######################################################################################
 # Execution settings ('auto' executes any notebook that is missing outputs)
@@ -107,6 +114,11 @@ sphinx:
     # Only auto-linkify explicit URLs — fuzzy mode catches things like
     # `pyquist.web` (`.web` is a real TLD) and makes broken links.
     myst_linkify_fuzzy_links: false
+
+    # Slugified anchors for h1–h3, so `page.md#section-slug` links resolve
+    # (course pages link assignment policies this way; without this, myst
+    # can't see Sphinx's auto section ids and renders the links broken).
+    myst_heading_anchors: 3
 
     # ---- Collapsible code cells (myst-nb) ---------------------------------
     # Relabel the `hide-input` toggle: every hidden cell holds setup code, so

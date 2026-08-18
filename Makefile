@@ -2,7 +2,7 @@
 
 PYQUIST_SUBMODULE  := pyquist
 PYQUIST_README_SRC := $(PYQUIST_SUBMODULE)/README.md
-PYQUIST_README     := content/book/pyquist/_pyquist_readme.md
+PYQUIST_README     := content/pyquist/_pyquist_readme.md
 
 all: book
 
@@ -180,6 +180,19 @@ book: check-split check-thebe-fork sync-pyquist-readme wheels vendor-thebe vendo
 		mkdir -p "$$dest"; \
 		cp -R "$$d" "$$dest/"; \
 	done
+	@# The unlisted /course/harry preview: nosearch keeps its terms out of
+	@# search, but Sphinx still writes the docnames/titles/filenames arrays.
+	@# Blank the strings rather than remove them — term hits index array
+	@# positions.
+	@python3 -c "import json, re, pathlib; \
+		p = pathlib.Path('_build/html/searchindex.js'); \
+		m = re.match(r'Search\.setIndex\((.*)\)\s*$$', p.read_text(), re.S); \
+		idx = json.loads(m.group(1)); \
+		arrays = [idx[k] for k in ('docnames', 'titles', 'filenames') if k in idx]; \
+		hidden = [i for i in range(len(idx['docnames'])) \
+			if any(a[i].startswith('course/harry/') for a in arrays)]; \
+		[a.__setitem__(i, '') for a in arrays for i in hidden]; \
+		p.write_text('Search.setIndex(' + json.dumps(idx, separators=(',', ':')) + ')')"
 
 clean:
 	jupyter-book clean ./
