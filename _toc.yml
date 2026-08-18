@@ -9,51 +9,10 @@ parts:
       - file: course/home
       - file: course/about
       - file: course/schedule
-      - file: course/assignments/index
-        sections:
-          - file: course/assignments/01
-            title: "Assignment 1"
-          - file: course/assignments/02
-            title: "Assignment 2"
-          - file: course/assignments/03/index
-            title: "Assignment 3*"
-            sections:
-              - file: course/assignments/03/1-creative
-                title: "Direction 1 (Creative)"
-              - file: course/assignments/03/2-technical
-                title: "Direction 2 (Technical)"
-              - file: course/assignments/03/3-technical
-                title: "Direction 3 (Technical)"
-          - file: course/assignments/04
-            title: "Assignment 4"
-          - file: course/assignments/05/index
-            title: "Assignment 5*"
-            sections:
-              - file: course/assignments/05/1-creative
-                title: "Direction 1 (Creative)"
-              - file: course/assignments/05/2-technical
-                title: "Direction 2 (Technical)"
-          - file: course/assignments/06
-            title: "Assignment 6"
-          - file: course/assignments/07
-            title: "Assignment 7"
-          - file: course/assignments/08/index
-            title: "Assignment 8*"
-            sections:
-              - file: course/assignments/08/1-creative
-                title: "Direction 1 (Creative)"
-              - file: course/assignments/08/2-technical
-                title: "Direction 2 (Technical)"
-              - file: course/assignments/08/3-technical
-                title: "Direction 3 (Technical)"
-          - file: course/assignments/09
-            title: "Assignment 9*"
-          - file: course/assignments/09/index
-            title: "Assignment 9*"
-            sections:
-              - file: course/assignments/09/1-technical
-          - file: course/assignments/322-final
-          - file: course/assignments/622-final
+      - file: course/assignments/01
+        title: "Assignment 1"
+      - file: course/assignments/02
+        title: "Assignment 2"
       - file: course/resources/index
         sections:
           - file: course/resources/1-accounts
@@ -63,149 +22,149 @@ parts:
       - file: course/syllabus
   - caption: Textbook
     chapters:
-      - file: about
-      - file: ch00/index
+      - file: book/index
+      - file: book/ch00/index
         sections:
-          - file: ch00/00
-          - file: ch00/01
-          - file: ch00/02
-          - file: ch00/03
-      - file: ch01/index
+          - file: book/ch00/00
+          - file: book/ch00/01
+          - file: book/ch00/02
+          - file: book/ch00/03
+      - file: book/ch01/index
         sections:
-          - file: ch01/00
-          - file: ch01/01
-          - file: ch01/02
-          - file: ch01/03
-          - file: ch01/04
-          - file: ch01/05
-          - file: ch01/06
-      - file: ch02/index
+          - file: book/ch01/00
+          - file: book/ch01/01
+          - file: book/ch01/02
+          - file: book/ch01/03
+          - file: book/ch01/04
+          - file: book/ch01/05
+          - file: book/ch01/06
+      - file: book/ch02/index
         sections:
-          - file: ch02/00
-          - file: ch02/01
-          - file: ch02/02
-          - file: ch02/03
-          - file: ch02/04
-          - file: ch02/05
-          - file: ch02/06
-      - file: ch03/index
+          - file: book/ch02/00
+          - file: book/ch02/01
+          - file: book/ch02/02
+          - file: book/ch02/03
+          - file: book/ch02/04
+          - file: book/ch02/05
+          - file: book/ch02/06
+      - file: book/ch03/index
         sections:
-          - file: ch03/00
-          - file: ch03/01
-          - file: ch03/02
-          - file: ch03/03
-          - file: ch03/04
-          - file: ch03/05
-          - file: ch03/06
-      - file: ch04/index
+          - file: book/ch03/00
+          - file: book/ch03/01
+          - file: book/ch03/02
+          - file: book/ch03/03
+          - file: book/ch03/04
+          - file: book/ch03/05
+          - file: book/ch03/06
+      - file: book/ch04/index
         sections:
-          - file: ch04/00
-          - file: ch04/01
-          - file: ch04/02
-          - file: ch04/03
-          - file: ch04/04
-          - file: ch04/05
-          - file: ch04/06
-      - file: ch05/index
+          - file: book/ch04/00
+          - file: book/ch04/01
+          - file: book/ch04/02
+          - file: book/ch04/03
+          - file: book/ch04/04
+          - file: book/ch04/05
+          - file: book/ch04/06
+      - file: book/ch05/index
         sections:
-          - file: ch05/00
-          - file: ch05/01
-          - file: ch05/02
-          - file: ch05/03
-          - file: ch05/04
-          - file: ch05/05
-          - file: ch05/06
-          - file: ch05/07
-          - file: ch05/08
-          - file: ch05/09
-      - file: ch06/index
+          - file: book/ch05/00
+          - file: book/ch05/01
+          - file: book/ch05/02
+          - file: book/ch05/03
+          - file: book/ch05/04
+          - file: book/ch05/05
+          - file: book/ch05/06
+          - file: book/ch05/07
+          - file: book/ch05/08
+          - file: book/ch05/09
+      - file: book/ch06/index
         sections:
-          - file: ch06/00
-          - file: ch06/01
-          - file: ch06/02
-          - file: ch06/03
-          - file: ch06/04
-          - file: ch06/05
-          - file: ch06/06
-          - file: ch06/07
-          - file: ch06/08
-          - file: ch06/09
-          - file: ch06/10
-      - file: ch07/index
+          - file: book/ch06/00
+          - file: book/ch06/01
+          - file: book/ch06/02
+          - file: book/ch06/03
+          - file: book/ch06/04
+          - file: book/ch06/05
+          - file: book/ch06/06
+          - file: book/ch06/07
+          - file: book/ch06/08
+          - file: book/ch06/09
+          - file: book/ch06/10
+      - file: book/ch07/index
         sections:
-          - file: ch07/00
-          - file: ch07/01
-          - file: ch07/02
-          - file: ch07/03
-          - file: ch07/04
-          - file: ch07/05
-          - file: ch07/06
-          - file: ch07/07
-      - file: ch08/index
+          - file: book/ch07/00
+          - file: book/ch07/01
+          - file: book/ch07/02
+          - file: book/ch07/03
+          - file: book/ch07/04
+          - file: book/ch07/05
+          - file: book/ch07/06
+          - file: book/ch07/07
+      - file: book/ch08/index
         sections:
-          - file: ch08/00
-          - file: ch08/01
-          - file: ch08/02
-          - file: ch08/03
-          - file: ch08/04
-          - file: ch08/05
-          - file: ch08/06
-          - file: ch08/07
-          - file: ch08/08
-          - file: ch08/09
-      - file: ch09/index
+          - file: book/ch08/00
+          - file: book/ch08/01
+          - file: book/ch08/02
+          - file: book/ch08/03
+          - file: book/ch08/04
+          - file: book/ch08/05
+          - file: book/ch08/06
+          - file: book/ch08/07
+          - file: book/ch08/08
+          - file: book/ch08/09
+      - file: book/ch09/index
         sections:
-          - file: ch09/00
-          - file: ch09/01
-          - file: ch09/02
-          - file: ch09/03
-          - file: ch09/04
-          - file: ch09/05
-          - file: ch09/06
-          - file: ch09/07
-          - file: ch09/08
-          - file: ch09/09
-          - file: ch09/10
-          - file: ch09/11
-          - file: ch09/12
-      - file: ch10/index
+          - file: book/ch09/00
+          - file: book/ch09/01
+          - file: book/ch09/02
+          - file: book/ch09/03
+          - file: book/ch09/04
+          - file: book/ch09/05
+          - file: book/ch09/06
+          - file: book/ch09/07
+          - file: book/ch09/08
+          - file: book/ch09/09
+          - file: book/ch09/10
+          - file: book/ch09/11
+          - file: book/ch09/12
+      - file: book/ch10/index
         sections:
-          - file: ch10/00
-          - file: ch10/01
-          - file: ch10/02
-          - file: ch10/03
-          - file: ch10/04
-          - file: ch10/05
-          - file: ch10/06
-          - file: ch10/07
-          - file: ch10/08
-      - file: ch11/index
-      - file: ch12/index
-      - file: ch13/index
-      - file: ch14/index
-      - file: ch15/index
-      - file: ch16/index
-      - file: ch17/index
-      - file: ch18/index
-      - file: ch19/index
-      - file: reference/index
+          - file: book/ch10/00
+          - file: book/ch10/01
+          - file: book/ch10/02
+          - file: book/ch10/03
+          - file: book/ch10/04
+          - file: book/ch10/05
+          - file: book/ch10/06
+          - file: book/ch10/07
+          - file: book/ch10/08
+      - file: book/ch11/index
+      - file: book/ch12/index
+      - file: book/ch13/index
+      - file: book/ch14/index
+      - file: book/ch15/index
+      - file: book/ch16/index
+      - file: book/ch17/index
+      - file: book/ch18/index
+      - file: book/ch19/index
+      - file: book/reference/index
         sections:
-          - file: pyquist/Overview
+          - file: book/pyquist/Overview
             sections:
-              - file: pyquist/api/audio
-              - file: pyquist/api/score
-              - file: pyquist/api/plot
-              - file: pyquist/api/device
-              - file: pyquist/api/helper
-              - file: pyquist/api/web
-          - file: appendix/intro
+              - file: book/pyquist/api/audio
+              - file: book/pyquist/api/score
+              - file: book/pyquist/api/plot
+              - file: book/pyquist/api/device
+              - file: book/pyquist/api/helper
+              - file: book/pyquist/api/web
+          - file: book/appendix/intro
             sections:
-              - file: appendix/Math
-              - file: appendix/Python
-          - file: references
-          - file: glossary
-          - file: errata
-          - file: license
+              - file: book/appendix/Math
+              - file: book/appendix/Python
+          - file: book/references
+          - file: book/glossary
+          - file: book/errata
+          - file: book/license
   - caption: Templates
     chapters:
       - file: template-notebook

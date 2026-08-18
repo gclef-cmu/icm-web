@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Combine content/ch{nn}/ section files back into {n}-{slug}/index.md chapters.
+"""Combine content/book/ch{nn}/ section files back into {n}-{slug}/index.md chapters.
 
 The inverse of tools/split_chapters.py, for PRing edits back up to icm-text.
 By design `split(merge(content)) == content` byte for byte; the round-trip is
@@ -22,6 +22,7 @@ import nbformat
 REPO = Path(__file__).resolve().parent.parent
 SOURCE = REPO / "icm-text"  # ground-truth prose submodule
 CONTENT = REPO / "content"
+BOOK = CONTENT / "book"  # chapters live under the /book URL prefix
 
 from split_chapters import (  # noqa: E402
     CHAPTER_FOLDER_RE,
@@ -222,33 +223,34 @@ def merge_chapter(content_chapter: Path, out_root: Path) -> dict:
 
 
 def roundtrip_check(merged_root: Path, results: list[dict]) -> None:
-    """Re-run the splitter on the merged tree and diff against content/ch*/."""
+    """Re-run the splitter on the merged tree and diff against content/book/ch*/."""
     print("\nverifying round-trip (split(merge(content)) == content)...")
     with tempfile.TemporaryDirectory() as tmp:
         tmp_content = Path(tmp) / "content"
         tmp_content.mkdir()
-        # Temporarily redirect the splitter's CONTENT and SOURCE globals, and
-        # turn off animation rendering — clip filenames are a pure function
+        # Temporarily redirect the splitter's CONTENT/BOOK and SOURCE globals,
+        # and turn off animation rendering — clip filenames are a pure function
         # of the sources, so the byte comparison needs no manim.
         import split_chapters as sp
 
-        orig_source, orig_content = sp.SOURCE, sp.CONTENT
+        orig_source, orig_content, orig_book = sp.SOURCE, sp.CONTENT, sp.BOOK
         orig_render = sp.RENDER_ANIMATIONS
         sp.SOURCE, sp.CONTENT = merged_root, tmp_content
+        sp.BOOK = tmp_content / "book"
         sp.RENDER_ANIMATIONS = False
         try:
             for r in results:
                 folder = merged_root / r["slug"]
                 sp.split_chapter(folder)
         finally:
-            sp.SOURCE, sp.CONTENT = orig_source, orig_content
+            sp.SOURCE, sp.CONTENT, sp.BOOK = orig_source, orig_content, orig_book
             sp.RENDER_ANIMATIONS = orig_render
 
         any_diff = False
         for r in results:
             n = r["chapter_num"]
-            orig = CONTENT / f"ch{n:02d}"
-            roundtripped = tmp_content / f"ch{n:02d}"
+            orig = BOOK / f"ch{n:02d}"
+            roundtripped = tmp_content / "book" / f"ch{n:02d}"
             files_to_check = sorted(
                 p.name
                 for p in orig.iterdir()
@@ -308,15 +310,15 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    if not CONTENT.exists():
-        sys.exit(f"content/ not found at {CONTENT}")
+    if not BOOK.exists():
+        sys.exit(f"content/book/ not found at {BOOK}")
     chapter_dirs = sorted(
         p
-        for p in CONTENT.iterdir()
+        for p in BOOK.iterdir()
         if p.is_dir() and re.match(r"^ch\d+$", p.name) and (p / "index.md").exists()
     )
     if not chapter_dirs:
-        sys.exit("no content/ch{nn}/ chapters found")
+        sys.exit("no content/book/ch{nn}/ chapters found")
 
     if args.out.exists():
         shutil.rmtree(args.out)

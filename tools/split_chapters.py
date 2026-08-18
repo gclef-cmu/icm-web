@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Split each icm-text/{n}-{slug}/index.md into per-section files under content/ch{nn}/.
+"""Split each icm-text/{n}-{slug}/index.md into per-section files under content/book/ch{nn}/.
 
 icm-text/ (a pinned submodule) is the ground truth. For each chapter this
 strips the frontmatter, splits the body on `## ` headings (ignoring fenced
@@ -7,16 +7,17 @@ code blocks), demotes headings one level, copies assets/code/figures across,
 and regenerates the chapter part of _toc.yml. A section that embeds a
 companion notebook via `{interactive}`/`{animation}` is emitted as a .ipynb
 instead of .md; `{animation}` companions are additionally rendered — here,
-not at book build time — into committed clips under content/chNN/anim/
+not at book build time — into committed clips under content/book/chNN/anim/
 (unchanged clips are reused byte-for-byte, so only new or edited scenes
 cost a manim render). It also mirrors the icm-f26/ course-website submodule
-into content/course/, copies book front matter (about.md, errata.md) from
-icm-text/ to content/, and copies icm-text/refs.bib to content/references.bib.
+into content/course/, copies book front matter from icm-text/ into
+content/book/ (about.md lands as book/index.md, the /book landing page),
+and copies icm-text/refs.bib to content/book/references.bib.
 
 Everything is authored in MyST already, so nothing is translated — only
 restructured. Run via `make split` (or `--page` for a standalone template
-folder). WARNING: wipes content/ch*/ and content/course/, dropping any local
-overrides; review `git diff content/` afterward.
+folder). WARNING: wipes content/book/ch*/ and content/course/, dropping any
+local overrides; review `git diff content/` afterward.
 """
 from __future__ import annotations
 
@@ -37,10 +38,13 @@ from nbformat.v4 import new_code_cell, new_markdown_cell, new_notebook
 REPO = Path(__file__).resolve().parent.parent
 SOURCE = REPO / "icm-text"  # ground-truth prose submodule
 CONTENT = REPO / "content"
+BOOK = CONTENT / "book"  # every Textbook page lives under the /book URL prefix
 TOC = REPO / "_toc.yml"
 REFS_SRC = SOURCE / "refs.bib"
-REFS_DEST = CONTENT / "references.bib"  # what _config.yml's bibtex_bibfiles points at
-FRONT_MATTER_FILES = ("about.md", "errata.md")  # authored upstream, copied verbatim
+REFS_DEST = BOOK / "references.bib"  # what _config.yml's bibtex_bibfiles points at
+# Authored upstream, copied verbatim: (icm-text name, content/book/ name).
+# about.md becomes book/index.md so /book/ itself is the textbook cover.
+FRONT_MATTER_FILES = (("about.md", "index.md"), ("errata.md", "errata.md"))
 
 COURSE_SOURCE = REPO / "icm-f26"  # course-website submodule
 COURSE_DEST = CONTENT / "course"
@@ -748,7 +752,7 @@ def split_chapter(folder: Path) -> dict | None:
         intro_after_title.append(line)
     intro_text = "".join(intro_after_title).strip("\n")
 
-    out_dir = CONTENT / f"ch{chapter_num:02d}"
+    out_dir = BOOK / f"ch{chapter_num:02d}"
     anim_stash = stash_anim_files(out_dir)
     if out_dir.exists():
         shutil.rmtree(out_dir)
@@ -776,7 +780,7 @@ def split_chapter(folder: Path) -> dict | None:
             (out_dir / f"{i:02d}.ipynb").write_text(nbformat.writes(nb) + "\n")
         else:
             (out_dir / f"{i:02d}.md").write_text(section_md)
-        section_refs.append(f"ch{chapter_num:02d}/{i:02d}")
+        section_refs.append(f"book/ch{chapter_num:02d}/{i:02d}")
 
     for sub in ("assets", "code", "figures"):
         src_sub = folder / sub
@@ -787,7 +791,7 @@ def split_chapter(folder: Path) -> dict | None:
 
     return {
         "chapter_num": chapter_num,
-        "index": f"ch{chapter_num:02d}/index",
+        "index": f"book/ch{chapter_num:02d}/index",
         "sections": section_refs,
         "slug": folder.name,
         "title": chapter_title,
@@ -796,9 +800,9 @@ def split_chapter(folder: Path) -> dict | None:
 
 
 def regenerate_toc(results: list[dict]) -> None:
-    """Rewrite the chapter entries (ch*/) of _toc.yml in place.
+    """Rewrite the chapter entries (book/ch*/) of _toc.yml in place.
 
-    Replaces only the contiguous run of `- file: chNN/index` entries
+    Replaces only the contiguous run of `- file: book/chNN/index` entries
     (with their nested `sections:`) inside the "Textbook" part; the hand-
     maintained scaffold around it (captions, templates, reference subtree)
     is preserved.
@@ -811,10 +815,10 @@ def regenerate_toc(results: list[dict]) -> None:
 
     starts = [
         i for i, l in enumerate(lines)
-        if l.lstrip().startswith("- file: ch") and l.rstrip().endswith("/index")
+        if l.lstrip().startswith("- file: book/ch") and l.rstrip().endswith("/index")
     ]
     if not starts:
-        sys.exit("could not locate chapter entries (ch*/index) in _toc.yml")
+        sys.exit("could not locate chapter entries (book/ch*/index) in _toc.yml")
     start = starts[0]
     base = indent(lines[start])
 
@@ -825,7 +829,7 @@ def regenerate_toc(results: list[dict]) -> None:
             continue  # blank lines inside the run are dropped
         ind = indent(l)
         is_sibling_file = ind == base and l.lstrip().startswith("- file:")
-        if ind < base or (is_sibling_file and not l.lstrip().startswith("- file: ch")):
+        if ind < base or (is_sibling_file and not l.lstrip().startswith("- file: book/ch")):
             end = j
             break
 
@@ -1016,7 +1020,7 @@ def print_course_tree() -> None:
 
 
 def sync_references() -> None:
-    """Copy icm-text/refs.bib to content/references.bib (a generated file).
+    """Copy icm-text/refs.bib to content/book/references.bib (a generated file).
 
     The professor maintains the bibliography upstream; a leading @comment
     marks the copy as generated (bibtex ignores @comment entries).
@@ -1036,19 +1040,20 @@ def sync_references() -> None:
 
 
 def sync_front_matter() -> None:
-    """Copy book front-matter pages verbatim from icm-text/ to content/.
+    """Copy book front-matter pages verbatim from icm-text/ to content/book/.
 
     A missing source means a stale submodule checkout; fail rather than
     silently leaving a divergent copy in content/.
     """
-    for name in FRONT_MATTER_FILES:
+    BOOK.mkdir(parents=True, exist_ok=True)
+    for name, dest_name in FRONT_MATTER_FILES:
         src = SOURCE / name
         if not src.exists():
             sys.exit(
                 f"icm-text/{name} not found — update the icm-text submodule"
             )
-        shutil.copyfile(src, CONTENT / name)
-        print(f"  synced content/{name}  <- icm-text/{name}")
+        shutil.copyfile(src, BOOK / dest_name)
+        print(f"  synced content/book/{dest_name}  <- icm-text/{name}")
 
 
 def split_standalone_page(folder: Path, chapter_num: int, sec_index: int) -> None:

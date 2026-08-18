@@ -25,7 +25,7 @@ from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxRole
 
-# Submodules documented under content/pyquist/api/; a name starting with one
+# Submodules documented under content/book/pyquist/api/; a name starting with one
 # of these is treated as already qualified by the author.
 _SUBMODULES = ("audio", "score", "device", "plot", "helper", "web")
 

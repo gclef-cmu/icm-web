@@ -80,13 +80,21 @@ jobs:
 
       # SCS runs plain Apache: serving 404.html for unknown URLs is a GitHub
       # Pages convention, so point Apache at it explicitly. Written here, not
-      # committed to the repo, to keep it out of the Pages artifact. The
-      # redirect keeps pre-August-2026 /content/ deep links working (scp
-      # never deletes, so the stale content/ tree on AFS is masked, not gone).
-      - name: Add .htaccess for custom 404 + legacy /content/ redirect (SCS Apache)
+      # committed to the repo, to keep it out of the Pages artifact.
+      # Redirects, in match order:
+      #   1. the site root lands on the course home page
+      #   2. /about.html is now the /book/ cover page
+      #   3. textbook pages moved under /book/ (Aug 2026)
+      #   4. pre-August-2026 /content/ deep links drop the prefix (a chapter
+      #      link then re-enters and hits rule 3; scp never deletes, so the
+      #      stale content/ tree on AFS is masked, not gone)
+      - name: Add .htaccess for custom 404 + redirects (SCS Apache)
         run: |
           printf '%s\n' \
             'ErrorDocument 404 /~15322/404.html' \
+            'RedirectMatch 301 "^/~15322/?$" "/~15322/course/home.html"' \
+            'RedirectMatch 301 "^/~15322/about\.html$" "/~15322/book/"' \
+            'RedirectMatch 301 "^/~15322/(ch[0-9][0-9]|reference|pyquist|appendix|errata|glossary|license|references)((/|\.).*)?$" "/~15322/book/$1$2"' \
             'RedirectMatch 301 "^/~15322/content(/.*)?$" "/~15322$1"' \
             > _build/html/.htaccess
 

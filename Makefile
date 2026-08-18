@@ -2,19 +2,19 @@
 
 PYQUIST_SUBMODULE  := pyquist
 PYQUIST_README_SRC := $(PYQUIST_SUBMODULE)/README.md
-PYQUIST_README     := content/pyquist/_pyquist_readme.md
+PYQUIST_README     := content/book/pyquist/_pyquist_readme.md
 
 all: book
 
 # Regenerate the gitignored book sources from the pinned submodules:
-# icm-text/ -> content/ch{nn}/ (+ the chapter part of _toc.yml), icm-f26/ ->
-# content/course/ (minus unreleased staging dirs), and about/errata/
-# refs.bib into content/. CI runs this before every `make book`; run it
-# locally after cloning or bumping a pin. Only content/chNN/anim/*.mp4 is
-# committed — unchanged clips are reused byte-identically, so the split needs
-# no manim unless a scene changed (then install manim + icm_anim and commit
-# the new mp4s with the pin bump).
-# WARNING: wipes content/ch*/ and content/course/ entirely.
+# icm-text/ -> content/book/ch{nn}/ (+ the chapter part of _toc.yml),
+# icm-f26/ -> content/course/ (minus unreleased staging dirs), and about/
+# errata/refs.bib into content/book/. CI runs this before every `make book`;
+# run it locally after cloning or bumping a pin. Only content/book/chNN/
+# anim/*.mp4 is committed — unchanged clips are reused byte-identically, so
+# the split needs no manim unless a scene changed (then install manim +
+# icm_anim and commit the new mp4s with the pin bump).
+# WARNING: wipes content/book/ch*/ and content/course/ entirely.
 split:
 	python3 tools/split_chapters.py
 
@@ -156,8 +156,8 @@ check-thebe-fork:
 # content/ is generated (gitignored except anim clips); fail early with the
 # fix instead of a confusing missing-toc-file error from jupyter-book.
 check-split:
-	@test -f content/ch00/index.md || { \
-		echo "ERROR: generated book sources missing (content/ch00/index.md)."; \
+	@test -f content/book/ch00/index.md || { \
+		echo "ERROR: generated book sources missing (content/book/ch00/index.md)."; \
 		echo "  run: make split   (needs icm-text + icm-f26 submodules initialized)"; \
 		exit 1; \
 	}
@@ -174,7 +174,7 @@ book: check-split check-thebe-fork sync-pyquist-readme wheels vendor-thebe vendo
 	@# Sphinx doesn't track files referenced by raw <img>/<audio>/<video>
 	@# HTML tags, so copy each chapter's assets and pre-rendered anim clips
 	@# into the build output ourselves (dest drops the content/ prefix).
-	@for d in content/ch*/assets content/ch*/anim content/template-animation/anim; do \
+	@for d in content/book/ch*/assets content/book/ch*/anim content/template-animation/anim; do \
 		[ -d "$$d" ] || continue; \
 		dest="_build/html/$$(dirname "$${d#content/}")"; \
 		mkdir -p "$$dest"; \

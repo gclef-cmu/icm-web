@@ -164,7 +164,7 @@ A **warning** — something that can go wrong.
 
 :::{seealso}
 A **see-also** — a pointer to related material, e.g. the
-{doc}`Pyquist reference <pyquist/Overview>`.
+{doc}`Pyquist reference <book/pyquist/Overview>`.
 :::
 
 :::{admonition} Custom title
@@ -193,7 +193,7 @@ A **warning** — something that can go wrong.
 
 :::{seealso}
 A **see-also** — a pointer to related material, e.g. the
-{doc}`Pyquist reference <pyquist/Overview>`.
+{doc}`Pyquist reference <book/pyquist/Overview>`.
 :::
 
 :::{admonition} Custom title
@@ -581,13 +581,13 @@ Studio, 48000
 | ------ | ---- | ------------ |
 | A labeled section | `` {ref}`label` `` | {ref}`why-markdown` |
 | A numbered figure | `` {numref}`label` `` | {numref}`fig-waveform-md` |
-| Another page | `` {doc}`path` `` | {doc}`About <about>` |
+| Another page | `` {doc}`path` `` | {doc}`About <book/index>` |
 | An equation | `` {eq}`label` `` | {eq}`eq-euler-md` |
 | A theorem | `` {prf:ref}`label` `` | {prf:ref}`thm-nyquist-md` |
 
-**Citations** pull from `content/references.bib`. Cite with
+**Citations** pull from `content/book/references.bib`. Cite with
 `` {cite}`dannenberg1997machine` `` → {cite}`dannenberg1997machine`. Every
-citation is collected automatically on the {doc}`References <references>` page.
+citation is collected automatically on the {doc}`References <book/references>` page.
 
 ## 11. Footnotes
 
@@ -881,7 +881,7 @@ the {doc}`notebook template <template-notebook>` instead.
 Two book-specific inline shorthands for the book's house style.
 
 Use `{vocab}` when introducing a term for the first time. It italicizes the term
-and links it to its definition in the {doc}`Glossary <glossary>`.
+and links it to its definition in the {doc}`Glossary <book/glossary>`.
 
 Source:
 
@@ -930,7 +930,7 @@ $$
 
 Use `{pyquist}` to mention a Pyquist symbol in prose. It renders the name as
 inline code spelled the way students write it (`pq.…`) and links it to the
-matching entry in the {doc}`Pyquist reference <pyquist/Overview>`. An unknown
+matching entry in the {doc}`Pyquist reference <book/pyquist/Overview>`. An unknown
 symbol warns at build time, so the prose and the library stay in sync.
 
 The display always shows valid, copy-pasteable code, so what you write and what

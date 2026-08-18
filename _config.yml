@@ -224,4 +224,4 @@ latex:
     targetname: icmbook.tex
 
 bibtex_bibfiles:
-  - references.bib
+  - book/references.bib
