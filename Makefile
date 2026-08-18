@@ -1,4 +1,4 @@
-.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels check-thebe-fork vendor-pyodide template-interactive template-animation
+.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels check-thebe-fork check-split vendor-pyodide template-interactive template-animation
 
 PYQUIST_SUBMODULE  := pyquist
 PYQUIST_README_SRC := $(PYQUIST_SUBMODULE)/README.md
@@ -6,14 +6,15 @@ PYQUIST_README     := content/pyquist/_pyquist_readme.md
 
 all: book
 
-# Pull the latest prose from the icm-text submodule into per-section files
-# under content/ch{nn}/ (bump the submodule first to advance the pin). Also
-# mirrors icm-f26/ into content/course/ and refs.bib into content/references.bib.
-# {animation} clips render HERE, into committed content/chNN/anim/*.mp4 —
-# unchanged clips are reused byte-identically; new or edited scenes need manim
-# and icm_anim importable. Commit the mp4s with the regenerated pages.
-# WARNING: wipes content/ch*/ and content/course/ entirely, dropping any local
-# styling overrides — review with `git diff content/` afterwards.
+# Regenerate the gitignored book sources from the pinned submodules:
+# icm-text/ -> content/ch{nn}/ (+ the chapter part of _toc.yml), icm-f26/ ->
+# content/course/ (minus unreleased staging dirs), and about/errata/
+# refs.bib into content/. CI runs this before every `make book`; run it
+# locally after cloning or bumping a pin. Only content/chNN/anim/*.mp4 is
+# committed — unchanged clips are reused byte-identically, so the split needs
+# no manim unless a scene changed (then install manim + icm_anim and commit
+# the new mp4s with the pin bump).
+# WARNING: wipes content/ch*/ and content/course/ entirely.
 split:
 	python3 tools/split_chapters.py
 
@@ -152,7 +153,16 @@ check-thebe-fork:
 		echo "  pip install --force-reinstall --no-deps 'sphinx-thebe @ git+https://github.com/TeachBooks/Sphinx-Thebe@1f3a80969622b7d63f48f05d8769f5cb933202a0'"; \
 		exit 1; }
 
-book: check-thebe-fork sync-pyquist-readme wheels vendor-thebe vendor-pyodide
+# content/ is generated (gitignored except anim clips); fail early with the
+# fix instead of a confusing missing-toc-file error from jupyter-book.
+check-split:
+	@test -f content/ch00/index.md || { \
+		echo "ERROR: generated book sources missing (content/ch00/index.md)."; \
+		echo "  run: make split   (needs icm-text + icm-f26 submodules initialized)"; \
+		exit 1; \
+	}
+
+book: check-split check-thebe-fork sync-pyquist-readme wheels vendor-thebe vendor-pyodide
 	@# PIP_DISABLE_PIP_VERSION_CHECK: keeps pip's "new release" notice out of
 	@# baked %pip cell output. ICM_BOOK_BUILD: kernel-only preview cells
 	@# guard on this and build nothing.
@@ -180,10 +190,10 @@ spotless:
 serve: book
 	python -m http.server --directory _build/html/
 
-check:
+check: check-split
 	jupyter-book build content/ --path-output "$(CURDIR)" --config "$(CURDIR)/_config.yml" \
 		--toc "$(CURDIR)/_toc.yml" --builder linkcheck
 
-pdf:
+pdf: check-split
 	jupyter-book build content/ --path-output "$(CURDIR)" --config "$(CURDIR)/_config.yml" \
 		--toc "$(CURDIR)/_toc.yml" --builder pdflatex

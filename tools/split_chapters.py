@@ -45,6 +45,8 @@ FRONT_MATTER_FILES = ("about.md", "errata.md")  # authored upstream, copied verb
 COURSE_SOURCE = REPO / "icm-f26"  # course-website submodule
 COURSE_DEST = CONTENT / "course"
 COURSE_SKIP_FILES = {"README.md"}  # contributor placeholder, not a course page
+# Unreleased staging dirs in icm-f26 — never mirrored, never in the TOC.
+COURSE_SKIP_DIRS = {("assignments", "harry")}
 COURSE_CAPTION = "- caption: Course Information"
 # Sidebar order for course pages/sections; anything not listed sorts after.
 COURSE_ORDER = ("home", "about", "schedule", "assignments", "resources", "showcase")
@@ -959,9 +961,9 @@ def mirror_course() -> None:
     """Mirror the icm-f26/ course-website submodule verbatim into content/course/.
 
     icm-f26 pages are already MyST, so nothing is split or demoted — files
-    are copied with their layout preserved, skipping the README placeholder
-    and dotfiles/dirs. Wipes content/course/ first, then regenerates its
-    part of _toc.yml.
+    are copied with their layout preserved, skipping the README placeholder,
+    dotfiles/dirs, and the unreleased staging dirs in COURSE_SKIP_DIRS.
+    Wipes content/course/ first, then regenerates its part of _toc.yml.
     """
     if not COURSE_SOURCE.exists() or not any(COURSE_SOURCE.iterdir()):
         print(
@@ -979,6 +981,8 @@ def mirror_course() -> None:
         rel = src.relative_to(COURSE_SOURCE)
         if any(part.startswith(".") for part in rel.parts):
             continue  # skip .git and any other dotfiles/dirs
+        if any(rel.parts[: len(d)] == d for d in COURSE_SKIP_DIRS):
+            continue
         if src.is_dir() or rel.name in COURSE_SKIP_FILES:
             continue
         dest = COURSE_DEST / rel
