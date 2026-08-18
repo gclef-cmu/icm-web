@@ -97,16 +97,21 @@ jobs:
       # scp step below needs no lookup at all. No echo: the IP would hint at
       # the masked hostname secret.
       - name: Resolve and pin SCS host DNS (runners flake on this lookup)
+        # Plain shell, unlike the job's bash -el: no errexit to kill the retry
+        # loop, no login profile / conda PATH involved — the step manages its
+        # own exit code. -x traces each command so a failure is diagnosable
+        # from the log (Actions masks the hostname secret in log output).
+        shell: bash {0}
         run: |
+          set -x
           host="${{ secrets.SCS_HOSTNAME }}"
           for i in $(seq 1 10); do
             for cmd in "getent ahostsv4 $host" \
                        "dig +short +time=3 +tries=1 @1.1.1.1 $host A" \
                        "dig +short +time=3 +tries=1 @8.8.8.8 $host A"; do
-              # || true: the job shell runs bash -e, which would kill the
-              # script on the first failed lookup instead of retrying.
-              ip=$($cmd 2>/dev/null | grep -Eom1 '^([0-9]{1,3}\.){3}[0-9]{1,3}' || true)
+              ip=$($cmd 2>/dev/null | grep -Eom1 '^([0-9]{1,3}\.){3}[0-9]{1,3}')
               if [ -n "$ip" ]; then
+                set +x
                 echo "$ip $host" | sudo tee -a /etc/hosts >/dev/null
                 exit 0
               fi
