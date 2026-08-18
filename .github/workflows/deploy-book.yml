@@ -21,6 +21,8 @@ concurrency:
 jobs:
   deploy-book:
     runs-on: ubuntu-latest
+    # Normal runs finish in ~4 min; a hung runner otherwise burns the 6 h default.
+    timeout-minutes: 20
 
     defaults:
       run:
@@ -30,11 +32,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         # NOTE: do NOT set `submodules: true` — .gitmodules uses SSH URLs and
-        # icm-text is private, so the default checkout can't fetch them. Each
+        # icm-f26 is private, so the default checkout can't fetch them. Each
         # submodule is fetched explicitly below over HTTPS instead (pyquist
-        # anonymously, icm-text/icm-f26 with per-repo read-token secrets —
-        # two tokens because the repos have different owners and fine-grained
-        # PATs are single-owner).
+        # and icm-text anonymously, icm-f26 with a read-token secret).
 
       - name: Fetch pyquist submodule (public, over HTTPS)
         run: |
@@ -45,10 +45,12 @@ jobs:
 
       - name: Fetch icm-text + icm-f26 submodules (pinned, over HTTPS)
         run: |
-          # Token URLs must be set BEFORE --init so init doesn't copy the SSH
-          # URLs from .gitmodules (same trick as the pyquist step above). No
-          # --remote: both stay at the SHAs pinned by this commit.
-          git config submodule.icm-text.url "https://x-access-token:${{ secrets.ICM_TEXT_READ_TOKEN }}@github.com/chrisdonahue/icm-text.git"
+          # URLs must be set BEFORE --init so init doesn't copy the SSH URLs
+          # from .gitmodules (same trick as the pyquist step above). icm-text
+          # (the public pcm repo) fetches anonymously; private icm-f26 needs
+          # its read-token secret. No --remote: both stay at the SHAs pinned
+          # by this commit.
+          git config submodule.icm-text.url https://github.com/chrisdonahue/pcm.git
           git config submodule.icm-f26.url "https://x-access-token:${{ secrets.ICM_F26_READ_TOKEN }}@github.com/gclef-cmu/icm-f26.git"
           git submodule update --init icm-text icm-f26
 
