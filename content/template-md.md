@@ -516,6 +516,23 @@ Rendered:
 | Square   | Odd harmonics |
 | Sawtooth | All harmonics |
 
+A headerless table: write body rows only, no `|---|` line. (A table whose
+header cells are all empty renders the same way.)
+
+Source:
+
+````markdown
+| **Sine**     | Fundamental only |
+| **Square**   | Odd harmonics |
+| **Sawtooth** | All harmonics |
+````
+
+Rendered:
+
+| **Sine**     | Fundamental only |
+| **Square**   | Odd harmonics |
+| **Sawtooth** | All harmonics |
+
 The `{list-table}` directive (easier for long cell text; supports a caption and
 label).
 
