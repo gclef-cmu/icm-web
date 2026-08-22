@@ -679,6 +679,28 @@ html[data-theme="dark"] {
   hyphens: manual;
 }
 
+/* Inline AI-policy badges — {icon-ai} / {icon-noai} (_ext/icm_roles.py).
+   Sized in em, so one icon markup serves every context: in an `# ` heading
+   the glyph comes out heading-sized, in prose or a table cell text-sized. */
+html[data-theme="light"] {
+  --icm-icon-ai:   #007d4d;                 /* darkened green for white bg */
+  --icm-icon-noai: var(--cmu-red);
+}
+html[data-theme="dark"] {
+  --icm-icon-ai:   #5cc99a;
+  --icm-icon-noai: var(--cmu-red-bright);
+}
+.icm-icon {
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.22em;   /* a round glyph sits low to look on-baseline */
+}
+.icm-icon-ai   { color: var(--icm-icon-ai); }
+.icm-icon-noai { color: var(--icm-icon-noai); }
+/* The slash is drawn twice: this page-colored under-stroke keeps it from
+   merging into the lettering at body-text size. */
+.icm-icon .icm-icon-halo { stroke: var(--pst-color-background); }
+
 /* Parameters / Returns / Raises field names get the red accent. */
 .bd-article dl.py dl.field-list > dt {
   color: var(--pst-color-primary);
