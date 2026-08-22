@@ -1267,10 +1267,13 @@ html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(> .icm
    The dark-mode light "legibility card" is right for baked-light figures
    but wrong for outputs that carry their own design: the audio chip is
    fully theme-aware (and live plotly widgets are their own deliberate
-   light surface already).
+   light surface already), and a baked widget (icm_plotly ghost controls +
+   figure) must sit exactly where the live one will: controls on the page,
+   the plot on its own white paper.
    ====================================================================== */
 html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(audio),
-html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(.audio-block) {
+html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(.audio-block),
+html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(> .icm-widget-baked) {
   background-color: transparent;
   border-radius: 0;
   padding: 0;

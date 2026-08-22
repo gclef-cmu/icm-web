@@ -113,10 +113,13 @@ wheels:
 	@# from PyPI at runtime. live-cells.js installs it per-page, deps=False.
 	@# In a subdir on purpose: the main manifest globs _static/wheels/*.whl
 	@# and installs on EVERY live page — these only on plotly pages.
+	@# plotly is pinned to the build env's version so the live FigureWidget
+	@# bundles the same plotly.js as the baked figure above.
 	python3 -m pip download -q --no-deps --only-binary=:all: \
 		--implementation py --abi none --platform any \
 		-d _static/wheels/widgets \
-		plotly anywidget ipywidgets narwhals psygnal typing-extensions \
+		"plotly==$$(python3 -c 'import plotly; print(plotly.__version__)')" \
+		anywidget ipywidgets narwhals psygnal typing-extensions \
 		comm widgetsnbextension jupyterlab-widgets
 	python3 -c "import glob, json, os; \
 		ws = sorted(os.path.basename(p) for p in glob.glob('_static/wheels/widgets/*.whl')); \
@@ -124,14 +127,12 @@ wheels:
 	@# anywidget's FRONTEND: the widget manager fetches it from a CDN at
 	@# render time (npm/anywidget@~X.Y.*/dist/index.js). Serve it ourselves —
 	@# live-cells.js points data-jupyter-widgets-cdn at /widgets-cdn/, and the
-	@# AMD build ships inside the wheel we just downloaded.
-	python3 -c "import glob, pathlib, zipfile; \
-		w = glob.glob('_static/wheels/widgets/anywidget-*.whl')[0]; \
-		ver = pathlib.Path(w).name.split('-')[1]; \
-		major, minor = ver.split('.')[:2]; \
-		dst = pathlib.Path('vendor/widgets-cdn/anywidget@~%s.%s.*/dist' % (major, minor)); \
-		dst.mkdir(parents=True, exist_ok=True); \
-		(dst / 'index.js').write_bytes(zipfile.ZipFile(w).read('anywidget/nbextension/index.js'))"
+	@# AMD build ships inside the wheel we just downloaded. The script also
+	@# reroutes its import() through the page (window.__icmImport): thebe
+	@# runs that file in a hidden iframe, and widget ESM evaluated there gets
+	@# the iframe's document/window — plotly then measures text in a
+	@# display:none document and puts axis titles on the wrong side.
+	python3 tools/vendor_anywidget.py
 	@# Install-order manifest for live-cells.js: the stubs must install
 	@# before pyquist so micropip treats those dependencies as satisfied and
 	@# never fetches the real packages.

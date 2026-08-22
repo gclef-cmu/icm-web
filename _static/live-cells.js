@@ -37,6 +37,7 @@
 
   var thebeConfig = null; // parsed + patched text/x-thebe-config
   var mountPromise = null; // single-flight: editors mounted into the DOM
+  var widgetsCdnReady = Promise.resolve(); // window.__icmWidgetsCdn resolved
   var bootPromise = null; // thebelab.bootstrap() result (resolves kernel-up)
   var kernelPromise = null; // single-flight: first Run -> kernel ready
   var kernelRequested = false; // gates status UI (mount itself is silent)
@@ -86,14 +87,34 @@
     // Third-party widget frontends (anywidget, for FigureWidget) load from
     // a CDN by default; point thebe's loader (patched overridable by
     // make vendor-thebe) at the book's own copy (make wheels →
-    // vendor/widgets-cdn/).
+    // vendor/widgets-cdn/). The copy sits under a content-hash directory
+    // named by manifest.json — fetched uncached, so a rebuilt bundle is
+    // always a new URL (the module URL itself carries no version, and
+    // browsers kept serving the old file from cache). thebe reads the base
+    // when its core script loads, so mountEditors awaits this first.
     (function () {
       var me = document.querySelector('script[src*="live-cells.js"]');
       var prefix = me ? me.getAttribute("src").replace(/_static\/live-cells\.js.*$/, "") : "";
       var root = prefix ? prefix.replace(/\/$/, "") : ".";
-      window.__icmWidgetsCdn = new URL(
-        root + "/widgets-cdn/", document.baseURI).href;
+      var cdnRoot = new URL(root + "/widgets-cdn/", document.baseURI).href;
+      window.__icmWidgetsCdn = cdnRoot;
+      widgetsCdnReady = fetch(new URL("manifest.json", cdnRoot), { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (m) {
+          if (m && m.base) window.__icmWidgetsCdn = new URL(m.base, cdnRoot).href;
+        })
+        .catch(function () {});
     })();
+    // Widget ESM (plotly's FigureWidget bundle) must evaluate in this
+    // page's realm: thebe loads widget frontends through RequireJS in a
+    // hidden iframe, and an import() from there hands the module that
+    // iframe's document and window — plotly measures text in a display:none
+    // document (axis titles land on the wrong side) and listens for resize
+    // on a window that never resizes. The vendored anywidget frontend
+    // (tools/vendor_anywidget.py) imports through this instead.
+    window.__icmImport = function (url) {
+      return import(url);
+    };
     // Baked plotly figures (icm_plotly.show at build) render immediately —
     // the real figure, no kernel — from the inert JSON in the page.
     renderBakedPlotly();
@@ -204,7 +225,7 @@
       ];
       // pyodide runtime + package closure (list written by make vendor-pyodide)
       jobs.push(
-        fetch(new URL(root + "/pyodide/warm-manifest.json", document.baseURI).href)
+        fetch(new URL(root + "/pyodide/warm-manifest.json", document.baseURI).href, { cache: "no-store" })
           .then(function (r) { return r.json(); })
           .then(function (names) {
             return Promise.all(names.map(function (n) {
@@ -216,7 +237,7 @@
       // the book's wheels + the plotly widget stack
       ["/_static/wheels/", "/_static/wheels/widgets/"].forEach(function (dir) {
         jobs.push(
-          fetch(new URL(root + dir + "manifest.json", document.baseURI).href)
+          fetch(new URL(root + dir + "manifest.json", document.baseURI).href, { cache: "no-store" })
             .then(function (r) { return r.json(); })
             .then(function (names) {
               return Promise.all(names.map(function (n) {
@@ -484,6 +505,7 @@
       },
     };
 
+    await widgetsCdnReady; // thebe bakes the CDN base into a module constant
     await loadScript(config.rootPath + "/thebe-dist/core/index.js");
 
     prepareCells();
@@ -588,6 +610,52 @@
   function dropBakedOutput(cell) {
     var baked = cell.querySelector(".live-baked-output");
     if (baked) baked.remove();
+  }
+
+  // Baked → live hand-off. The baked output stays on screen while the cell
+  // executes and its live output renders hidden at zero height (see
+  // .live-staging); once the new output exists the two are exchanged in one
+  // step, so the page never collapses and re-expands. A widget lands in the
+  // space its baked stand-in (icm_plotly's ghost controls + figure) held.
+  function stageOutputSwap(cell) {
+    var baked = cell.querySelector(".live-baked-output");
+    var live = cell.querySelector(".cell_output.live-output");
+    if (!baked || !live) {
+      dropBakedOutput(cell);
+      return { now: function () {}, whenRendered: function () { return Promise.resolve(); } };
+    }
+    live.classList.add("live-staging");
+    var done = false;
+    var finish = function () {
+      if (done) return;
+      done = true;
+      baked.remove();
+      live.classList.remove("live-staging");
+    };
+    // Rendered = the output area has content, and for a plotly widget the
+    // plot's svg too (widget views arrive a beat after execute resolves).
+    // Errors show at once; a cell that prints nothing releases after a
+    // short grace; a widget that never draws gives up after 3 s.
+    var wantsPlot = !!baked.querySelector(".icm-plotly-fig");
+    var whenRendered = function () {
+      var t0 = Date.now();
+      return new Promise(function (resolve) {
+        (function poll() {
+          var area = live.querySelector(".jp-OutputArea");
+          var has = !!(area && area.children.length);
+          var errored = !!live.querySelector('[data-mime-type="application/vnd.jupyter.stderr"]');
+          var drawn = !wantsPlot || !!live.querySelector(".js-plotly-plot svg.main-svg");
+          var waited = Date.now() - t0;
+          if ((has && (drawn || errored)) || waited > (has ? 3000 : 400)) {
+            finish();
+            resolve();
+            return;
+          }
+          setTimeout(poll, 40);
+        })();
+      });
+    };
+    return { now: finish, whenRendered: whenRendered };
   }
 
   // Thebe renders live output areas INSIDE .cell_input; move each into a
@@ -699,7 +767,8 @@
 
   async function installWheels(config) {
     var base = new URL(config.rootPath + "/_static/wheels/", document.baseURI);
-    var manifest = await (await fetch(new URL("manifest.json", base))).json();
+    // no-store: a cached manifest would keep naming wheels a rebuild replaced
+    var manifest = await (await fetch(new URL("manifest.json", base), { cache: "no-store" })).json();
     var lines = [
       // Load the compiled dependencies from the Pyodide distribution FIRST,
       // pinning them to the WASM builds — micropip might otherwise resolve
@@ -724,7 +793,7 @@
     // div is the second signal, in case the code scrape ever misses.
     if (pageCode.indexOf("plotly") !== -1 || document.querySelector(".icm-plotly-fig")) {
       var wbase = new URL(config.rootPath + "/_static/wheels/widgets/", document.baseURI);
-      var widgets = await (await fetch(new URL("manifest.json", wbase))).json();
+      var widgets = await (await fetch(new URL("manifest.json", wbase), { cache: "no-store" })).json();
       var urls = widgets.map(function (name) {
         return '"' + new URL(name, wbase).href + '"';
       });
@@ -926,16 +995,18 @@
         var nb = nbCellOf(cell);
         if (!nb) continue;
         if (isTarget || !ranIds.has(nb.id)) {
-          dropBakedOutput(cell);
+          var swap = stageOutputSwap(cell);
           setChip(cell, "running");
           startTimer(cell);
           try {
             await nb.execute();
           } catch (e) {
+            swap.now();
             stopTimer(cell, true); // kernel-level failure → red bar
             throw e;
           }
           ranIds.add(nb.id);
+          await swap.whenRendered();
           freshenOutput(cell);
           stopTimer(cell, cellErrored(cell)); // green, or red on a Python traceback
           if (!isTarget) setChip(cell, "idle");

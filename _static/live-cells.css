@@ -191,9 +191,128 @@ html[data-theme="dark"] .live-status-connected {
   display: none;
 }
 
-/* Baked plotly figures render into their .icm-plotly-fig container. */
+/* Baked widget = ghost controls + figure, the same stack the live output
+ * area shows (ipywidgets VBox, then the plot, custom.css's 0.55rem gap
+ * between outputs), so the hand-off moves nothing on the page. A flex
+ * column because Lumino's output panels are overflow:hidden — margins
+ * stack there instead of collapsing, and flex items stack the same way. */
+.icm-widget-baked {
+  display: flex;
+  flex-direction: column;
+}
 .icm-plotly-fig {
-  margin: 0.4rem 0;
+  margin: 0;
+}
+.icm-ghost-box + .icm-plotly-fig {
+  margin-top: 0.55rem;
+}
+
+/* --- ghost controls ---
+ * icm_plotly renders a widget's controls as inert HTML at build; the boxes
+ * copy @jupyter-widgets/controls (28px rows, 2px margins, 300px wide, 80px
+ * labels, 72px readouts, 4px track, 16px handle) so the real controls
+ * replace them in place. Muted like ipywidgets' disabled state. */
+.icm-ghost-box {
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  user-select: none;
+  font-size: 13px;
+  line-height: 28px;
+}
+.icm-ghost-hbox {
+  flex-direction: row;
+}
+.icm-ghost-row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: 300px;
+  height: 28px;
+  margin: 2px;
+  opacity: 0.6;
+}
+.icm-ghost-html {
+  width: auto;
+  height: auto;
+  align-items: baseline;
+}
+.icm-ghost-label {
+  flex: 0 0 auto;
+  width: 80px;
+  margin-right: 8px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.icm-ghost-track {
+  position: relative;
+  flex: 1 1 148px;
+  height: 4px;
+  margin: 0 6px;
+  border-radius: 4px;
+  background: #fafafa;
+  box-shadow: inset 0 1px 1px #f0f0f0, 0 3px 6px -5px #bbb;
+}
+.icm-ghost-handle {
+  position: absolute;
+  top: -6px;
+  width: 16px;
+  height: 16px;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #d9d9d9;
+}
+.icm-ghost-readout {
+  flex: 0 1 auto;
+  min-width: 72px;
+  margin-left: 4px; /* ipywidgets' inline margin before an hslider readout */
+  text-align: center;
+  white-space: nowrap;
+}
+.icm-ghost-select {
+  flex: 1 1 148px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 25px 0 8px;
+  line-height: 22px;
+  color: rgba(0, 0, 0, 0.87); /* dark ink on the white field, both themes */
+  border: 1px solid #bdbdbd;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 18 18'%3E%3Cpath fill='%23777' d='M5.2 6.9l3.8 3.8 3.8-3.8z'/%3E%3C/svg%3E") no-repeat right 4px center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.icm-ghost-check {
+  margin-right: 8px;
+}
+.icm-ghost-html-content {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+/* The live output while its baked predecessor is still on screen
+ * (live-cells.js stageOutputSwap): laid out at the cell's width but out of
+ * flow, so the exchange is one reflow and the baked output stays the last
+ * in-flow child (its bottom margin keeps collapsing through the cell —
+ * in-flow at height 0 it would add that margin inside). visibility, not
+ * display — plotly has to size itself in here. custom.css sets the
+ * margins !important. */
+body.live-active div.cell:has(> .cell_output.live-output.live-staging) {
+  position: relative;
+}
+body.live-active div.cell div.cell_output.live-output.live-staging {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  margin: 0 !important;
 }
 
 /* --- autorun placeholder ---
@@ -431,3 +550,136 @@ div.cell div.cell_output:has(.live-error)::before {
   background: currentColor;
 }
 .audio-output-name .ba-sub { color: var(--pst-color-text-muted, #8a8a8a); font-weight: 500; }
+/* --- widget control panel: the house look for live controls ----------- */
+/* Each at-rest rule also names the icm_plotly ghost twin (.icm-ghost-*) —
+ * the baked stand-in has to look and measure exactly like the live
+ * controls that replace it. Pointer/focus states are live-only. */
+
+/* The controls sit in a quiet card so they read as one instrument panel. */
+.cell_output.live-output .widget-vbox,
+.icm-ghost-vbox {
+  background: #faf9f7;
+  border: 1px solid #e8e6e2;
+  border-radius: 10px;
+  padding: 14px 18px 12px;
+  margin: 6px 0 12px;
+  max-width: 500px;
+  box-sizing: border-box;
+}
+
+.cell_output.live-output .widget-inline-hbox,
+.icm-ghost-row {
+  margin: 5px 0;
+}
+
+/* Labels read left-aligned, like a list, with every track starting on one
+ * shared axis. */
+.cell_output.live-output .widget-inline-hbox .widget-label,
+.icm-ghost-label {
+  text-align: left;
+  color: #3b3b3b;
+  font-size: 0.92rem;
+}
+
+/* Track: steel, slim, rounded. */
+.cell_output.live-output .widget-slider .noUi-target,
+.icm-ghost-track {
+  background: #e2e0dd;
+  border: none;
+  box-shadow: none;
+  height: 6px;
+  border-radius: 3px;
+}
+
+/* Knob: a Carnegie red dot that grows under the pointer. */
+.cell_output.live-output .widget-slider .noUi-handle,
+.icm-ghost-handle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #c41230;
+  border: 2.5px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  right: -9px;
+  top: -6px;
+}
+.cell_output.live-output .widget-slider .noUi-handle::before,
+.cell_output.live-output .widget-slider .noUi-handle::after {
+  display: none;
+}
+.cell_output.live-output .widget-slider .noUi-handle:hover {
+  transform: scale(1.18);
+}
+.cell_output.live-output .widget-slider .noUi-handle:active {
+  cursor: grabbing;
+  transform: scale(1.22);
+  box-shadow: 0 0 0 6px rgba(196, 18, 48, 0.16);
+}
+.cell_output.live-output .widget-slider .noUi-handle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(196, 18, 48, 0.28);
+}
+
+/* While dragging, the value reads in the accent color. !important: the
+ * thebe fork's code.css pins .widget-readout ink with !important. */
+.cell_output.live-output .widget-slider:active .widget-readout {
+  color: #c41230 !important;
+}
+
+/* Readout: a small tabular chip so values feel like a meter. */
+.cell_output.live-output .widget-readout,
+.icm-ghost-readout {
+  font-family: var(--pst-font-family-monospace, monospace);
+  font-size: 0.78rem;
+  color: #3b3b3b;
+  background: #efedea;
+  border: none;
+  box-shadow: none;
+  border-radius: 5px;
+  padding: 1px 6px;
+  min-width: 3.6em;
+  text-align: center;
+}
+
+/* Dropdown: match the card. */
+.cell_output.live-output .widget-dropdown select,
+.icm-ghost-select {
+  background: #ffffff;
+  border: 1px solid #d9d6d2;
+  border-radius: 6px;
+  color: #3b3b3b;
+  padding: 2px 8px;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+/* The panel is a light surface in both themes, so pin the on-card ink.
+ * !important: the thebe fork's code.css sets dark-mode widget-label ink to
+ * the page text color with !important, assuming controls sit on the page
+ * background rather than a card. */
+html[data-theme="dark"] .cell_output.live-output .widget-inline-hbox .widget-label,
+html[data-theme="dark"] .cell_output.live-output .widget-readout,
+html[data-theme="dark"] .cell_output.live-output .widget-html,
+html[data-theme="dark"] .cell_output.live-output .widget-dropdown select,
+html[data-theme="dark"] .icm-ghost-label,
+html[data-theme="dark"] .icm-ghost-readout,
+html[data-theme="dark"] .icm-ghost-html,
+html[data-theme="dark"] .icm-ghost-select {
+  color: #3b3b3b !important;
+}
+
+/* Ghost-only: the knob is a plain absolutely-positioned dot at the value
+ * (noUi's right:-9px is for its own origin box), the select keeps room for
+ * its drawn caret, and nothing reacts to the pointer. */
+.icm-ghost-handle {
+  right: auto;
+  transform: translateX(-50%);
+  transition: none;
+  cursor: default;
+}
+.icm-ghost-select {
+  padding-right: 25px;
+}
+
