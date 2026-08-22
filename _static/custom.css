@@ -227,6 +227,57 @@ html[data-theme="dark"] {
   color: var(--icm-accent-3) !important;
 }
 
+/* ----------------------------------------------------------------------
+   Reveal-on-click solutions — an unlabeled {solution} inside an {exercise}
+   (see _ext/icm_exercise.py). A native <details>, so it opens with
+   JavaScript off; the summary is dressed as a small pill button.
+   ---------------------------------------------------------------------- */
+.exercise-solution {
+  margin: 0.6rem 0 0.2rem;
+}
+.exercise-solution > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--icm-box-border);
+  border-radius: 999px;
+  background: var(--pst-color-background);
+  font-family: var(--pst-font-family-base, sans-serif);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--icm-accent-3);
+  cursor: pointer;
+  list-style: none;             /* suppress the default marker; we draw our own */
+}
+.exercise-solution > summary::-webkit-details-marker { display: none; }
+.exercise-solution > summary:hover {
+  color: var(--pst-color-primary);
+  border-color: var(--pst-color-primary);
+}
+/* The same chevron the collapsible code cells use: right shut, down open. */
+.exercise-solution > summary::before {
+  content: "";
+  flex: none;
+  width: 0.4em;
+  height: 0.4em;
+  border-right: 0.11em solid currentColor;
+  border-bottom: 0.11em solid currentColor;
+  transform: translateY(-0.1em) rotate(-45deg);   /* › */
+  transition: transform 0.15s ease;
+}
+.exercise-solution[open] > summary::before {
+  transform: translateY(-0.05em) rotate(45deg);   /* ⌄ */
+}
+/* The answer, set off from the question by a rule rather than another box —
+   it already sits inside the exercise admonition. */
+.exercise-solution-body {
+  margin: 0.6rem 0 0.2rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--icm-box-border);
+}
+.exercise-solution-body > :last-child { margin-bottom: 0; }
+
 /* Hide the auto "Definition N" / "Exercise N" counters — every directive
    here has a meaningful name, so the number is just noise. */
 .proof.admonition    > .admonition-title .caption-number,
