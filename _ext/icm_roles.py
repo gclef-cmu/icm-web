@@ -14,7 +14,9 @@ in green, and "AI" ringed in red with a slash through it. Both are written
 bare (no backticks), and both are sized in ``em`` — an icon in a ``#``
 heading comes out heading-sized, one in a paragraph text-sized. The bare
 form is a ``source-read`` substitution onto the matching role, which also
-takes an accessible label: ``{icon-noai}`no AI on the exam```.
+takes an accessible label: ``{icon-noai}`no AI on the exam```. The space you
+type after a bare icon becomes a CSS margin rather than text, which keeps
+heading slugs (and the ``page.md#heading`` links pointing at them) unchanged.
 
 ``:{blue}[text]`` / ``:{blue}[text](url)`` colors inline text or a whole
 link; ``:{blue-highlight}[text]`` renders it as a highlighter chip on the
@@ -68,27 +70,38 @@ class IconRole(SphinxRole):
     PDF gets a short bracketed word instead of a silently missing icon.
     """
 
-    def __init__(self, kind: str):
+    def __init__(self, kind: str, lead: bool = False):
         super().__init__()
         self.kind = kind
+        self.lead = lead
 
     def run(self):
         label = self.text.strip() or _ICON_LABELS[self.kind]
+        latex = _ICON_LATEX[self.kind] + ("~" if self.lead else "")
         return [
-            nodes.raw("", _icon_svg(self.kind, label), format="html"),
-            nodes.raw("", _ICON_LATEX[self.kind], format="latex"),
+            nodes.raw("", _icon_svg(self.kind, label, self.lead), format="html"),
+            nodes.raw("", latex, format="latex"),
         ], []
 
 
-# A bare ``{icon-ai}``. The lookahead, plus the ``at_end`` check in
-# ``_expand_outside_code``, keep the authored role form ``{icon-ai}`label```
-# out — that form is already what the expansion produces.
-ICON_RE = re.compile(r"\{icon-(ai|noai)\}(?!`)")
+# A bare ``{icon-ai}``, plus the space that usually follows it. The lookahead,
+# with the ``at_end`` check in ``_expand_outside_code``, keeps the authored role
+# form ``{icon-ai}`label``` out — that form is what the expansion produces.
+ICON_RE = re.compile(r"\{icon-(ai|noai)\}(?!`)( ?)")
 _ICON_LABELS = {"ai": "AI allowed", "noai": "AI not allowed"}
 _ICON_LATEX = {"ai": r"\textbf{[AI]}", "noai": r"\textbf{[no AI]}"}
-# Match the body font's own fallbacks: the glyphs are lettering, not a logo.
-_ICON_FONT = ("system-ui, -apple-system, 'Segoe UI', Roboto, "
-              "'Helvetica Neue', Arial, sans-serif")
+# The lettering is stroked, not a ``<text>`` element: docutils reads a raw
+# node's tag-stripped content as its text, so a ``<text>AI</text>`` here would
+# prefix every heading slug and page ``<title>`` with a stray "AI".
+_LETTERS = (
+    # "A" — two legs and a crossbar
+    '<path d="M7.2 16.3 10.5 7.9 13.8 16.3M8.25 13.7H12.75" fill="none"'
+    ' stroke="currentColor" stroke-width="1.9" stroke-linecap="round"'
+    ' stroke-linejoin="round"/>'
+    # "I"
+    '<path d="M16.8 7.9V16.3" fill="none" stroke="currentColor"'
+    ' stroke-width="1.9" stroke-linecap="round"/>'
+)
 # Ring endpoints of a 45-degree slash across a circle of r=9.4 at (12, 12).
 _SLASH = (
     '<line class="icm-icon-halo" x1="5.4" y1="5.4" x2="18.6" y2="18.6"'
@@ -98,19 +111,15 @@ _SLASH = (
 )
 
 
-def _icon_svg(kind: str, label: str) -> str:
-    """The badge as inline SVG: a ring around "AI", plus a slash for noai.
-
-    ``dy`` centers the lettering instead of ``dominant-baseline``, which
-    older WebKit ignores — a baseline-shifted "AI" would sit low in the ring.
-    """
+def _icon_svg(kind: str, label: str, lead: bool = False) -> str:
+    """The badge as inline SVG: a ring around "AI", plus a slash for noai."""
+    lead = " icm-icon-lead" if lead else ""
     return (
-        f'<svg class="icm-icon icm-icon-{kind}" viewBox="0 0 24 24" role="img"'
+        f'<svg class="icm-icon icm-icon-{kind}{lead}" viewBox="0 0 24 24" role="img"'
         f' aria-label="{escape(label, quote=True)}" focusable="false">'
         '<circle cx="12" cy="12" r="9.4" fill="none" stroke="currentColor"'
         ' stroke-width="2"/>'
-        '<text x="12" y="12" dy="0.36em" text-anchor="middle" fill="currentColor"'
-        f' font-family="{_ICON_FONT}" font-size="11" font-weight="700">AI</text>'
+        f'{_LETTERS}'
         f'{_SLASH if kind == "noai" else ""}'
         "</svg>"
     )
@@ -148,14 +157,23 @@ def _expand_outside_code(text: str) -> str:
         # expands to that same role form carrying the default label.
         if at_end:
             return m.group(0)
-        return "{icon-%s}`%s`" % (m.group(1), _ICON_LABELS[m.group(1)])
+        kind = m.group(1)
+        # The space after the icon is folded into the ``-lead`` variant's CSS
+        # margin. Keeping it out of the text means a heading's MyST slug — built
+        # from the heading's text tokens — comes out the same with the icon as
+        # without, so ``page.md#that-heading`` links keep resolving. With no
+        # space (before a comma, say) the plain variant sets no margin.
+        suffix = "-lead" if m.group(2) else ""
+        return "{icon-%s%s}`%s`" % (kind, suffix, _ICON_LABELS[kind])
 
     def sub(segment: str, before_code: bool = False) -> str:
         segment = COLOR_RE.sub(
             lambda m: "[%s]%s{.c-%s}" % (m.group(2), m.group(3) or "", m.group(1)),
             segment)
         return ICON_RE.sub(
-            lambda m: icon(m, before_code and m.end() == len(segment)), segment)
+            lambda m: icon(
+                m, before_code and m.end() == len(segment) and not m.group(2)),
+            segment)
 
     out: list[str] = []
     pos = 0
@@ -220,6 +238,9 @@ def setup(app: Sphinx) -> dict:
     app.add_role("vocab", VocabRole())
     app.add_role("icon-ai", IconRole("ai"))
     app.add_role("icon-noai", IconRole("noai"))
+    # ``-lead``: what the bare form expands to when a space followed it.
+    app.add_role("icon-ai-lead", IconRole("ai", lead=True))
+    app.add_role("icon-noai-lead", IconRole("noai", lead=True))
     app.connect("source-read", substitute_inline)
     return {
         "version": "0.1",

@@ -682,7 +682,9 @@ html[data-theme="dark"] {
 /* Inline AI-policy badges — {icon-ai} / {icon-noai} (_ext/icm_roles.py).
    Sized in em, so one icon markup serves every context: in an `# ` heading
    the glyph comes out heading-sized, in prose or a table cell text-sized. */
-html[data-theme="light"] {
+/* Light values sit on :root, not html[data-theme="light"], so a badge is
+   still colored before the theme attribute lands. */
+:root {
   --icm-icon-ai:   #007d4d;                 /* darkened green for white bg */
   --icm-icon-noai: var(--cmu-red);
 }
@@ -695,6 +697,10 @@ html[data-theme="dark"] {
   height: 1.15em;
   vertical-align: -0.22em;   /* a round glyph sits low to look on-baseline */
 }
+/* The space an author typed after a bare {icon-*} is folded into this margin
+   (see _ext/icm_roles.py) — the text tokens stay clean, so a heading's slug is
+   the same with a badge as without and `page.md#heading` links keep working. */
+.icm-icon-lead { margin-inline-end: 0.3em; }
 .icm-icon-ai   { color: var(--icm-icon-ai); }
 .icm-icon-noai { color: var(--icm-icon-noai); }
 /* The slash is drawn twice: this page-colored under-stroke keeps it from
