@@ -109,8 +109,8 @@ wheels:
 		dst = pathlib.Path('vendor/plotly-dist'); dst.mkdir(parents=True, exist_ok=True); \
 		shutil.copy(src, dst / 'plotly.min.js')"
 	@# The plotly widget stack (dependency closure included), self-hosted in
-	@# wheels/widgets/ with its own manifest so widget pages never fetch
-	@# from PyPI at runtime. live-cells.js installs it per-page, deps=False.
+	@# wheels/widgets/ with its own manifest, the fallback when PyPI's CDN
+	@# doesn't answer. live-cells.js installs it per-page, deps=False.
 	@# In a subdir on purpose: the main manifest globs _static/wheels/*.whl
 	@# and installs on EVERY live page — these only on plotly pages.
 	@# plotly is pinned to the build env's version so the live FigureWidget
@@ -121,9 +121,9 @@ wheels:
 		"plotly==$$(python3 -c 'import plotly; print(plotly.__version__)')" \
 		anywidget ipywidgets narwhals psygnal typing-extensions \
 		comm widgetsnbextension jupyterlab-widgets
-	python3 -c "import glob, json, os; \
-		ws = sorted(os.path.basename(p) for p in glob.glob('_static/wheels/widgets/*.whl')); \
-		open('_static/wheels/widgets/manifest.json', 'w').write(json.dumps(ws))"
+	@# Manifest entries carry each wheel's PyPI CDN URL next to its name;
+	@# live-cells.js prefers the CDN and falls back to these copies.
+	python3 tools/widget_wheel_manifest.py
 	@# anywidget's FRONTEND: the widget manager fetches it from a CDN at
 	@# render time (npm/anywidget@~X.Y.*/dist/index.js). Serve it ourselves —
 	@# live-cells.js points data-jupyter-widgets-cdn at /widgets-cdn/, and the

@@ -104,27 +104,117 @@ empty (see Troubleshooting). Update by bumping the pin:
 
 ## Live code (in-browser Python)
 
-Notebook pages are live: cells become editors on page load, and the first
-▶ Run boots a Python kernel **in the browser** via Pyodide — no server. The
-pipeline: `make book` builds wheels (`_static/wheels/`, including sounddevice
-and soundfile stubs for WASM) and vendors the thebe + Pyodide runtimes under
-`vendor/` (self-hosted; the kernel worker must be same-origin — never move
-them into `_static/`, where every `.js` auto-loads on each page). Page glue
-is `_static/live-cells.{js,css}`.
+Notebook pages are live: cells become editors on page load, and a Python
+kernel boots **in the browser** via Pyodide — no server — on the first ▶ Run,
+or at page load on pages with an `# autorun` widget. Everything below is
+shared infrastructure: it applies to every page with code cells and to every
+widget built with `icm_plotly.show(figure, controls)`, never to one widget.
+Page glue is `_static/live-cells.{js,css}`; the kernel worker and the patched
+thebe bundle must stay same-origin under `vendor/` (never `_static/`, where
+every `.js` auto-loads on each page).
+
+### The pipeline, end to end
+
+**Build (`make book`)**
+1. `wheels`: builds the book wheels (`_static/wheels/`: pyquist from the
+   submodule, icm_plotly, icm_widgets, the sounddevice/soundfile WASM
+   stubs) and downloads the plotly widget stack (`_static/wheels/widgets/`);
+   writes both manifests — the widgets one carries each wheel's exact
+   `files.pythonhosted.org` URL (`tools/widget_wheel_manifest.py`). Copies
+   the build env's `plotly.min.js` to `vendor/plotly-dist/`, and vendors
+   anywidget's frontend, patched to import widget ESM in the page realm,
+   under a content-hash directory `vendor/widgets-cdn/<hash>/` named by
+   `vendor/widgets-cdn/manifest.json` (`tools/vendor_anywidget.py`).
+2. `vendor-thebe`, `vendor-pyodide`: the thebe/thebe-lite bundles (thebe's
+   CDN base patched overridable) and a full Pyodide 0.27.7 mirror under
+   `vendor/` — the self-hosted **fallbacks** for the CDNs below.
+3. `jupyter-book build`: executes notebooks. `icm_plotly.show()` bakes each
+   widget as the figure's JSON (height fixed to the FigureWidget default,
+   `data-plotlyjs` = the exact plotly.js version) plus an inert **ghost** of
+   its controls — `controls()` runs once with ipywidgets comms switched
+   off, so nothing widget-shaped reaches the page — so the page shows the
+   finished layout with no kernel, and the live widget later lands in the
+   same pixels.
+
+**Page load (no Python yet)**
+- The baked figure renders immediately from jsDelivr's `plotly.js-dist-min`
+  at the baked version (fallback: `vendor/plotly-dist/`); the ghost sits
+  above it, pixel-identical to the live controls (its CSS rules are paired
+  with the live ones in `live-cells.css`).
+- Editors mount; `window.__icmWidgetsCdn` resolves from the hashed
+  widgets-cdn manifest (fetched `no-store`) before thebe loads, because thebe
+  bakes that base into a module constant.
+- Prose pages (no code cells) quietly prefetch the kernel runtime from the
+  origin the kernel will use, so the next widget page boots from cache.
+
+**Kernel boot (`startKernel` → `installWheels`)**
+1. `pyodideBase()` HEAD-probes jsDelivr's `pyodide-lock.json` (8 s); Pyodide
+   and its packages load from `cdn.jsdelivr.net/pyodide/v0.27.7/full/`, else
+   from `/pyodide/`. Prose-page prefetch uses the same decision.
+2. Compiled packages come from the Pyodide distribution first (WASM builds,
+   so micropip never picks a native PyPI wheel): **numpy always**; matplotlib
+   only if the page's code mentions matplotlib/icm_widgets/pyquist; soxr,
+   requests, tqdm only with pyquist. `pageWants()` reads the page's own
+   cells (the extension's hidden matplotlib-patch init cell excluded).
+3. Book wheels, each only where used: stubs + pyquist with pyquist;
+   icm_widgets with icm_plotly (it imports its palette from it); icm_plotly
+   on plotly pages. Never `!pip`/PyPI for these.
+4. Plotly pages: the widget stack installs `deps=False` from PyPI's CDN by
+   exact file URL (probe, 8 s), else from `/_static/wheels/widgets/`.
+5. Shims and patches (myst_nb.glue no-op; the matplotlib RcParams patch and
+   font-cache warm-up only where matplotlib is wanted), then the page's init
+   cells, then the `# autorun` chain. A cell failing with
+   `No module named 'pyquist'` on a page that skipped it installs pyquist
+   on demand and re-runs once.
+6. The baked output stays on screen while the cell runs; the live output
+   renders out of flow and the two are exchanged atomically once it exists
+   (`stageOutputSwap`) — zero layout shift.
+
+**Origins at a glance**
+
+| Asset | Primary origin | Fallback | Cache key |
+|---|---|---|---|
+| Pyodide runtime + packages (~13–30 MB) | jsDelivr `pyodide/v0.27.7/full/` | `/pyodide/` | versioned path |
+| plotly widget stack (~12 MB) | PyPI CDN, exact file URLs | `/_static/wheels/widgets/` | version-named files |
+| `plotly.min.js` for baked figures (4.6 MB) | jsDelivr `plotly.js-dist-min@<ver>` | `/plotly-dist/` | versioned path |
+| thebe + thebe-lite (2.7 MB, core patched) | self-hosted `/thebe-dist/` | — | 7-day cache |
+| book wheels (1.7 MB) | self-hosted `/_static/wheels/` | — | version-named files |
+| anywidget frontend (36 KB, patched) | self-hosted `/widgets-cdn/<hash>/` | — | content hash |
+
+A cold plotly-only page now pulls ~25 MB (numpy + the widget stack + the
+runtime), almost all of it from CDNs over HTTP/2; a pyquist page adds
+matplotlib and friends (~15 MB). Repeat visits hit the browser cache.
+
+**Cache-busting rules (a changed file must be a new URL)** — bump
+`tools/icm_plotly/pyproject.toml` (and icm_widgets') whenever the module
+changes: the kernel installs wheels by filename, and a same-named wheel was
+served stale from browser caches once. The anywidget bundle is content-
+hashed automatically. All `manifest.json` files are fetched `no-store`.
+Sphinx adds `?v=<hash>` to `_static/*.js|css`. The deploy's `.htaccess`
+(`deploy-scs.yaml`) marks version-named/hashed payloads `immutable` for a
+year, the runtime mirrors 7 days, manifests `no-cache`, and gzips
+wasm/json/js/css/html.
+
+**Diagnosing**: `?icm-local` on a page URL forces every self-hosted copy,
+`?icm-cdn` forces the CDNs without probing. In the kernel,
+`micropip.list()[name].source`, `pyodide_js._api.config.indexURL` and
+`pyodide_js.loadedPackages.to_py()` show where things came from; the
+`[live-cells]` console lines name fallbacks.
 
 ### The version matrix (these move together — don't bump one alone)
 
 | Pin | Where | Why |
 |---|---|---|
-| Pyodide **0.27.7** | `pyodideUrl` in `_static/live-cells.js` | pyquist needs numpy ≥ 2; bundled pyodide_kernel 0.4.7 crashes on ≥ 0.28 |
+| Pyodide **0.27.7** | `PYODIDE_VERSION` in `_static/live-cells.js` (jsDelivr URL) + `tools/vendor_pyodide.py` (mirror) | pyquist needs numpy ≥ 2; bundled pyodide_kernel 0.4.7 crashes on ≥ 0.28 |
 | thebe-lite **0.5.0**, thebe **0.9.3** | `Makefile` (`vendor-thebe`) | newest released; embeds pyodide_kernel 0.4.7 |
 | sphinx-thebe fork @ `1f3a809` | `environment.yml` | fork publishes no tags |
 | soundfile stub | `tools/soundfile_stub/` | Pyodide < 0.28 ships no WASM soundfile |
 
 Blocked upgrade: Pyodide 0.28 needs a thebe-lite release embedding
 pyodide-kernel ≥ 0.6. When it ships: bump both in `vendor-thebe`,
-`rm -rf vendor/thebe-dist`, bump `pyodideUrl` + `pipliteWheelUrl` in
-`live-cells.js`, delete the soundfile stub, smoke-test.
+`rm -rf vendor/thebe-dist`, bump `PYODIDE_VERSION` + `pipliteWheelUrl` in
+`live-cells.js` and `VERSION` in `tools/vendor_pyodide.py` (then
+`rm -rf vendor/pyodide`), delete the soundfile stub, smoke-test.
 
 **The fork trap**: the TeachBooks sphinx-thebe fork shares upstream's dist
 name *and* version, so a fresh env silently keeps upstream and deployed
@@ -178,6 +268,11 @@ through video and update both definitions.
   for `[live-cells]`; serve over `http://`, hard-reload (the service worker
   caches aggressively), and re-fetch a half-downloaded runtime with
   `rm -rf vendor/thebe-dist && make book`.
+- **A widget page is slow or loads stale code** — measure the origin first
+  (`curl -o /dev/null -w '%{time_starttransfer} %{speed_download}' <url>`);
+  compare `?icm-cdn` vs `?icm-local` on the page; if a just-changed Python
+  module behaves old in the kernel, its wheel version wasn't bumped (see
+  Cache-busting rules).
 
 ## Deploy
 
@@ -197,6 +292,13 @@ intermittently fail DNS lookups to CMU. Never re-run a **failed deploy-book
 run**: the duplicate Pages artifact breaks the deploy step; dispatch a fresh
 run instead (`gh workflow run deploy-book.yml`).
 
+deploy-scs also writes the site's `.htaccess` (404 page, URL redirects, and
+the cache/compression policy from "Cache-busting rules"); every directive
+block is guarded by `IfModule`, so a host without the module simply serves
+as before. The SCS host is slow per request (seconds of first byte, tens of
+KB/s), which is why the kernel payload comes from CDNs with the self-hosted
+copies as fallbacks — keep both in sync when bumping versions.
+
 ## Layout
 
 ```
@@ -207,9 +309,11 @@ tools/       split/merge scripts, icm_anim, icm_widgets, browser stubs
 content/     site sources — course/ + book/ (textbook, the /book URL tree),
              generated by `make split` (gitignored) except hand-authored
              pages and committed book/chNN/anim/ clips
-_static/     book JS/CSS — custom.css, live-cells.{js,css}, wheels/ (generated)
+_static/     book JS/CSS — custom.css, live-cells.{js,css}, wheels/ (generated:
+             book wheels + wheels/widgets/ with manifests naming PyPI URLs)
 _ext/        local Sphinx extensions — {audio}, figures, glossary, roles
-vendor/      vendored thebe/Pyodide runtimes (generated, gitignored)
+vendor/      vendored thebe/Pyodide runtimes, plotly.min.js, hashed anywidget
+             frontend (generated, gitignored) — the self-hosted fallbacks
 _config.yml  Jupyter Book config
 _toc.yml     table of contents (generated regions rewritten by make split)
 Makefile     split / book / serve / pdf / merge / clean

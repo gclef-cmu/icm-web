@@ -88,15 +88,38 @@ jobs:
       #   4. pre-August-2026 /content/ deep links drop the prefix (a chapter
       #      link then re-enters and hits rule 3; scp never deletes, so the
       #      stale content/ tree on AFS is masked, not gone)
-      - name: Add .htaccess for custom 404 + redirects (SCS Apache)
+      #   Cache policy: the host sends no Cache-Control, so every revisit
+      #   revalidated ~40 kernel files at seconds of first-byte each. Version-
+      #   named and content-addressed payloads are immutable for a year; the
+      #   runtime mirrors (unversioned paths, pinned contents) a week;
+      #   manifests never (live-cells.js fetches them no-store anyway).
+      #   Compression: the host gzips JS/CSS only; wasm and JSON shrink ~35 %.
+      #   Every block is guarded so a host without the module serves as today.
+      - name: Add .htaccess for custom 404 + redirects + cache policy (SCS Apache)
         run: |
-          printf '%s\n' \
-            'ErrorDocument 404 /~15322/404.html' \
-            'RedirectMatch 301 "^/~15322/?$" "/~15322/course/home.html"' \
-            'RedirectMatch 301 "^/~15322/about\.html$" "/~15322/book/"' \
-            'RedirectMatch 301 "^/~15322/(ch[0-9][0-9]|reference|appendix|errata|glossary|license|references)((/|\.).*)?$" "/~15322/book/$1$2"' \
-            'RedirectMatch 301 "^/~15322/content(/.*)?$" "/~15322$1"' \
-            > _build/html/.htaccess
+          cat > _build/html/.htaccess <<'EOF'
+          ErrorDocument 404 /~15322/404.html
+          RedirectMatch 301 "^/~15322/?$" "/~15322/course/home.html"
+          RedirectMatch 301 "^/~15322/about\.html$" "/~15322/book/"
+          RedirectMatch 301 "^/~15322/(ch[0-9][0-9]|reference|appendix|errata|glossary|license|references)((/|\.).*)?$" "/~15322/book/$1$2"
+          RedirectMatch 301 "^/~15322/content(/.*)?$" "/~15322$1"
+          <IfModule mod_headers.c>
+            <If "%{REQUEST_URI} =~ m#^/~15322/(_static/wheels/|widgets-cdn/[0-9a-f]+/)# || %{REQUEST_URI} =~ m#/anim/[^/]+-[0-9a-f]{12}\.mp4$#">
+              Header set Cache-Control "public, max-age=31536000, immutable"
+            </If>
+            <If "%{REQUEST_URI} =~ m#^/~15322/(pyodide|thebe-dist|plotly-dist)/#">
+              Header set Cache-Control "public, max-age=604800"
+            </If>
+            <If "%{REQUEST_URI} =~ m#manifest\.json$#">
+              Header set Cache-Control "no-cache"
+            </If>
+          </IfModule>
+          <IfModule mod_filter.c>
+            <IfModule mod_deflate.c>
+              AddOutputFilterByType DEFLATE application/wasm application/json application/javascript text/css text/html image/svg+xml
+            </IfModule>
+          </IfModule>
+          EOF
 
       # Runners fail resolving the SCS host when the Azure→CMU DNS path drops
       # queries (repeatedly on Aug 18 2026), and drone-scp does a single lookup
