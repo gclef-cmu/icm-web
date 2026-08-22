@@ -107,7 +107,30 @@ every example on this page reads instantly:
            fig.data[0].y = a * y0
 
        widgets.interactive_output(update, {"a": amp})
-       return widgets.VBox([amp])
+
+       out = widgets.Output()            # the audio card, always current
+       pending = []
+
+       def render():
+           out.outputs = ()
+           out.append_display_data(Audio(amp.value * y0, rate=sr, normalize=False))
+
+       async def settle():
+           await asyncio.sleep(0.25)
+           pending.clear()
+           render()
+
+       def on_change(_):
+           if pending:
+               pending.pop().cancel()
+           else:
+               out.outputs = ()
+           pending.append(asyncio.ensure_future(settle()))
+
+       amp.observe(on_change, names="value")
+       if not os.environ.get("ICM_BOOK_BUILD"):
+           render()
+       return widgets.VBox([amp, out])
 
    icm_plotly.show(figure, controls)
    ```
@@ -119,8 +142,12 @@ part that can't: it receives the figure as a live plotly `FigureWidget`,
 and its `update(...)` callback runs in **Python** on every slider move —
 on the book page, that is the in-browser kernel that `# autorun` boots at
 page load. When the kernel is up, the sliders appear and the baked figure
-is swapped for the live one. Importing `icm_plotly` also applies the house
-figure style, so neither function contains styling code (Section 5).
+is swapped for the live one. Sound lives in `controls(fig)` too: an
+audio card in a `widgets.Output` under the sliders that clears on the first
+move of a drag and re-renders itself a moment after the sliders settle, so
+whatever the reader plays is always the settings on screen. Importing `icm_plotly` also applies
+the house figure style, so neither function contains styling code
+(Section 5).
 
 The rules of the pattern — each one earned by a real failure:
 
@@ -145,6 +172,27 @@ The rules of the pattern — each one earned by a real failure:
 - **Fix the axes** — `fixedrange=True` and explicit ranges, so the view
   doesn't jump while data moves (the page hides plotly's toolbar; sliders
   are the interface).
+- **Sound is a card that follows the sliders, not a cell and not a
+  button** — put a `widgets.Output()` in `controls(fig)` and a `render()`
+  that synthesizes from the sliders' `.value`s and writes the card through
+  the Output's synced `outputs` trait: `out.outputs = ()` then
+  `out.append_display_data(Audio(x, rate=sr, normalize=False))`
+  (`IPython.display.Audio`, the element `pq.play` shows; the book's chip
+  wraps it). `observe` every slider: the first change of a drag clears the
+  card and a short `asyncio` timer, cancelled and rescheduled per change,
+  re-renders it about 0.25 s after the last one. Call `render()` once at
+  the end, guarded by `if not os.environ.get("ICM_BOOK_BUILD")` so the
+  build bakes no card (the ghost reserves the card's height). The result:
+  there is never a stale clip to press. A separate "hear it" cell makes
+  the reader retype parameters, and a render button lets them play a clip
+  that no longer matches the sliders. Two details earned by failures:
+  write through the `outputs` trait, never `with out:` (that block only
+  routes output while a kernel message is being handled, and the timer
+  fires outside one); and scale the signal yourself, since the card is
+  built with `normalize=False` (`x *= 0.125 / abs(x).max()` is about
+  -18 dBFS, `pq.play`'s own safe ceiling; `0.125 * a` when loudness itself
+  is the lesson). Needs `import asyncio`, `import os`, and
+  `from IPython.display import Audio` in the dependencies cell.
 
 From blank file to built page:
 
@@ -155,8 +203,9 @@ From blank file to built page:
    palette colors — before wiring any slider.
 3. **Add the sliders and the `update`** — precompute what you can outside
    `update`; the callback should be cheap enough to run on every drag tick.
-4. **Add sound where it earns its place** — `pq.play(...)` renders the
-   book's audio card in both environments (Section 7's demo ends with one).
+4. **Add sound where it earns its place** — the self-refreshing audio
+   card in `controls(fig)` (the rule above; Section 7's demo has one)
+   always plays the current settings.
 5. **Mark the cells** (Section 6) — `# hide` + `# no-output` on the setup
    cell; `# autorun` on the widget cell (its baked output *is* the figure —
    no `# no-output` there), plus `# hide` if readers shouldn't see the code.
@@ -268,8 +317,10 @@ Layout conventions, all visible in the demo widget below:
 - **Fixed ranges** on every axis (Section 2's rules) — the data moves, the
   frame doesn't.
 - **Sliders above the figure** — `controls(fig)` returns a
-  `widgets.VBox([…sliders…])`, which the page displays above the figure,
-  where the reader's eye lands first.
+  `widgets.VBox([…sliders…, out])`, which the page displays above the
+  figure, where the reader's eye lands first; the panel's card, equal
+  slider tracks, and audio-card styling come from `live-cells.css` and
+  `icm_plotly`, never from the notebook.
 
 ## 6. Hide, collapse, show — and autorun
 
@@ -320,8 +371,8 @@ wild with the code hidden, so only the widget shows).
 
 Try it live: change `f0` to 110 in the widget cell and press **▶ Run**, or
 flip the recipe to odd harmonics only (a square wave) with
-`k = np.arange(1, 2 * n_max, 2)` — then re-run the sound cell to hear the
-difference.
+`k = np.arange(1, 2 * n_max, 2)` — then press play on the card under the
+slider to hear the difference.
 
 ## 8. When something looks wrong
 
@@ -335,6 +386,9 @@ difference.
 | The page bakes megabytes of inert widget-state JSON | ipywidgets (a `FigureWidget` counts) leaked into `figure()` or the top of the cell — everything slider-shaped goes inside `controls(fig)`, which never runs at build |
 | The sliders take a while to arrive | Expected only on a first visit — the kernel + packages are ~45 MB, served by the book itself, downloaded once, cached, and pre-warmed while the reader is on other pages; the figure is already on screen and the status pill bottom-right shows progress |
 | A slider draws garbage after another widget on the page has run, and re-running its own cell cures it | The callback reads a top-level name (`t`, `y0`, …) that another notebook on the page rebound — every notebook shares the one kernel. Capture the name as a default argument: `def update(a, f, t=t):` (Section 2's capture rule) |
+| The audio card plays at the same loudness whatever the amplitude slider says | The card is built with `normalize=False`, so scale the signal yourself: `0.125 * a` keeps full amplitude at -18 dBFS |
+| The card clears on a drag but never comes back | `render()` writes with `with out:`; write through the Output's `outputs` trait (`out.outputs = ()` then `append_display_data`), which works from the timer task |
+| The whole widget vanishes once `controls()` returns an `Output` | The empty-output rule in `live-cells.css` must read `:has(> .jp-OutputArea:empty)` (the cell's own area only); an `Output` widget renders a nested area that the unscoped form mistook for "this cell printed nothing" |
 | Slider drags feel laggy | The `update` callback is doing real work per tick — precompute arrays outside it and only assign precomputed data (see the demo's `sums`/`partials`) |
 | The figure repaints in visible stages | Multiple trace assignments per tick — wrap them in `with fig.batch_update():` |
 | `ModuleNotFoundError: icm_plotly` on your own machine | Outside this repo it isn't installed — `pip install -e tools/icm_plotly tools/icm_widgets`; never add them to the `%pip` line |

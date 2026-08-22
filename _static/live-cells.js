@@ -28,6 +28,54 @@
     });
   }
 
+  // ----- fast origins --------------------------------------------------
+  // The heavy, version-immutable payloads (Pyodide + its packages, the
+  // plotly widget stack, plotly.js) load from public CDNs — HTTP/2,
+  // compressed, cached for a year — with the book's self-hosted copies as
+  // the fallback: the course web host serves every file with a multi-second
+  // first byte and tens of KB/s, which is minutes for a cold kernel.
+  // `?icm-local` on the URL forces the self-hosted copies, `?icm-cdn` the
+  // CDNs without probing (diagnosis).
+  var PYODIDE_VERSION = "0.27.7";
+  var PYODIDE_CDN = "https://cdn.jsdelivr.net/pyodide/v" + PYODIDE_VERSION + "/full/";
+  var forceLocal = /[?&]icm-local\b/.test(location.search);
+  var forceCdn = !forceLocal && /[?&]icm-cdn\b/.test(location.search);
+
+  // Resolves true when `url` answers within the time limit (HEAD, CORS —
+  // generous, since a slow answer still beats the fallback origin).
+  function reachable(url, ms) {
+    if (forceLocal) return Promise.resolve(false);
+    if (forceCdn) return Promise.resolve(true);
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, ms || 8000);
+    return fetch(url, { method: "HEAD", mode: "cors", signal: ctl && ctl.signal })
+      .then(function (r) { return r.ok; })
+      .catch(function () { return false; })
+      .then(function (ok) { clearTimeout(timer); return ok; });
+  }
+
+  // One decision per page for the Pyodide origin, shared by the prefetch
+  // and the kernel start (the lock file is tiny and proves the mirror).
+  var pyodideBasePromise = null;
+  function pyodideBase(root) {
+    if (!pyodideBasePromise) {
+      var local = new URL(root + "/pyodide/", document.baseURI).href;
+      pyodideBasePromise = reachable(PYODIDE_CDN + "pyodide-lock.json").then(function (ok) {
+        if (!ok) console.info("[live-cells] pyodide: self-hosted copy (CDN unreachable)");
+        return ok ? PYODIDE_CDN : local;
+      });
+    }
+    return pyodideBasePromise;
+  }
+
+  function loadScriptWithFallback(cdn, local) {
+    if (!cdn || forceLocal) return loadScript(local);
+    return loadScript(cdn).catch(function () {
+      console.info("[live-cells] CDN script failed, using self-hosted:", local);
+      return loadScript(local);
+    });
+  }
+
   var SEL_CELL = typeof thebe_selector !== "undefined" ? thebe_selector : ".thebe,.cell";
   var SEL_INPUT = typeof thebe_selector_input !== "undefined" ? thebe_selector_input : "pre";
   var SEL_OUTPUT = typeof thebe_selector_output !== "undefined" ? thebe_selector_output : ".output, .cell_output";
@@ -50,6 +98,19 @@
   var pendingFocus = null; // cell clicked before its editor existed
   var pageCodeSnapshot = ""; // cell sources captured BEFORE editors mount
 
+  // What this page's code uses decides what the kernel installs (pyquist
+  // alone drags in matplotlib, soxr, requests, tqdm — ~15 MB).
+  function pageWants() {
+    var code = pageCodeSnapshot;
+    var pyquist = /\bpyquist\b|\bpq\./.test(code);
+    return {
+      pyquist: pyquist,
+      mpl: pyquist || /matplotlib|icm_widgets/.test(code),
+      widgets: /icm_widgets/.test(code),
+      plotly: code.indexOf("plotly") !== -1 || !!document.querySelector(".icm-plotly-fig"),
+    };
+  }
+
   if (document.readyState !== "loading") init();
   else document.addEventListener("DOMContentLoaded", init);
 
@@ -65,8 +126,12 @@
     // Snapshot the page's code NOW, from the static <pre>s: once CodeMirror
     // mounts it renders text lazily, so hidden or off-screen editors expose
     // no textContent and any later scrape misses what the page uses.
-    pageCodeSnapshot = Array.prototype.map
+    pageCodeSnapshot = Array.prototype.filter
       .call(document.querySelectorAll(".cell_input"), function (e) {
+        // the extension's hidden init cell (its matplotlib patch) is not the page's code
+        return !e.closest(".tag_thebe-remove-input-init, .thebe-init, .tag_thebe-init");
+      })
+      .map(function (e) {
         return e.textContent;
       })
       .join("\n");
@@ -177,7 +242,11 @@
     var me = document.querySelector('script[src*="live-cells.js"]');
     var prefix = me ? me.getAttribute("src").replace(/_static\/live-cells\.js.*$/, "") : "";
     var root = prefix ? prefix.replace(/\/$/, "") : ".";
-    loadScript(root + "/plotly-dist/plotly.min.js")
+    // The exact plotly.js the figure was built for (icm_plotly bakes it in);
+    // jsDelivr serves the same file as the vendored copy.
+    var ver = nodes[0].getAttribute("data-plotlyjs");
+    var cdn = ver ? "https://cdn.jsdelivr.net/npm/plotly.js-dist-min@" + ver + "/plotly.min.js" : null;
+    loadScriptWithFallback(cdn, root + "/plotly-dist/plotly.min.js")
       .then(function () {
         nodes.forEach(function (node) {
           var spec = node.querySelector(
@@ -223,13 +292,18 @@
         grab(root + "/thebe-dist/lite/pypi/all.json"),
         grab(root + "/plotly-dist/plotly.min.js"),
       ];
-      // pyodide runtime + package closure (list written by make vendor-pyodide)
+      // pyodide runtime + package closure (list written by make vendor-pyodide),
+      // from the origin the kernel will actually load — the CDN when it answers
       jobs.push(
-        fetch(new URL(root + "/pyodide/warm-manifest.json", document.baseURI).href, { cache: "no-store" })
-          .then(function (r) { return r.json(); })
-          .then(function (names) {
+        Promise.all([
+          pyodideBase(root),
+          fetch(new URL(root + "/pyodide/warm-manifest.json", document.baseURI).href, { cache: "no-store" })
+            .then(function (r) { return r.json(); }),
+        ])
+          .then(function (res) {
+            var base = res[0], names = res[1];
             return Promise.all(names.map(function (n) {
-              return grab(root + "/pyodide/" + n);
+              return grab(base + n);
             }));
           })
           .catch(function () {})
@@ -713,7 +787,8 @@
 
   async function startKernel() {
     await ensureMounted();
-    status("Starting Python — a first visit downloads ~45 MB");
+    status("Starting Python — a first visit downloads the runtime (tens of MB)");
+    var pyBase = await pyodideBase(thebeConfig.rootPath);
     await loadScript(thebeConfig.rootPath + "/thebe-dist/lite/thebe-lite.min.js");
 
     // Pin the runtime. Pyodide 0.27.7: pyquist needs numpy>=2.0 (so >=0.27)
@@ -726,12 +801,9 @@
     // the page-level litePluginSettings unconditionally.
     var liteSettings = {
       "@jupyterlite/pyodide-kernel-extension:kernel": {
-        // Self-hosted (make vendor-pyodide → vendor/pyodide, served at
-        // /pyodide/): no CDN at runtime. Same 0.27.7 pin as before.
-        pyodideUrl: new URL(
-          thebeConfig.rootPath + "/pyodide/pyodide.js",
-          document.baseURI
-        ).href,
+        // jsDelivr's pyodide mirror when it answers (see pyodideBase), else
+        // the self-hosted copy (make vendor-pyodide → /pyodide/). Same pin.
+        pyodideUrl: pyBase + "pyodide.js",
         pipliteUrls: [
           new URL(thebeConfig.rootPath + "/thebe-dist/lite/pypi/all.json", document.baseURI).href,
         ],
@@ -769,33 +841,51 @@
     var base = new URL(config.rootPath + "/_static/wheels/", document.baseURI);
     // no-store: a cached manifest would keep naming wheels a rebuild replaced
     var manifest = await (await fetch(new URL("manifest.json", base), { cache: "no-store" })).json();
+    // Keyed on the pre-mount code snapshot (post-mount DOM scrapes miss
+    // lazily-rendered editors); see pageWants.
+    var pageCode = pageCodeSnapshot;
+    var wants = pageWants();
+    var wantsPyquist = wants.pyquist, wantsMpl = wants.mpl, wantsPlotly = wants.plotly;
+    // Compiled dependencies come from the Pyodide distribution FIRST,
+    // pinning them to the WASM builds — micropip might otherwise resolve a
+    // newer PyPI wheel that needs native libraries the browser lacks.
+    // (soundfile is absent from 0.27; the manifest's stub stands in.)
+    var compiled = ["numpy"];
+    if (wantsMpl) compiled.push("matplotlib");
+    if (wantsPyquist) compiled.push("soxr", "requests", "tqdm");
     var lines = [
-      // Load the compiled dependencies from the Pyodide distribution FIRST,
-      // pinning them to the WASM builds — micropip might otherwise resolve
-      // a newer PyPI wheel that needs native libraries the browser lacks.
-      // (soundfile is absent from 0.27; the manifest's stub stands in.)
       "import pyodide_js",
       "from pyodide.ffi import to_js",
-      'await pyodide_js.loadPackage(to_js(["numpy", "matplotlib", "soxr", "requests", "tqdm"]))',
+      "await pyodide_js.loadPackage(to_js(" + JSON.stringify(compiled) + "))",
       "import micropip",
     ];
+    // Book wheels, each only where used: the audio stubs exist for pyquist
+    // and travel with it; icm_plotly is the plotly pages' and imports its
+    // palette from icm_widgets (matplotlib-free at import), so that one
+    // travels with either.
     manifest.forEach(function (name) {
+      if (/^(sounddevice|soundfile|pyquist)-/.test(name) && !wantsPyquist) return;
+      if (/^icm_widgets-/.test(name) && !(wants.widgets || wantsPlotly)) return;
+      if (/^icm_plotly-/.test(name) && !wantsPlotly) return;
       lines.push('await micropip.install("' + new URL(name, base).href + '")');
     });
-    // Extras installed only when a cell on THIS page uses them, so other
-    // pages don't pay for them. Keyed on strings in the pre-mount code
-    // snapshot (post-mount DOM scrapes miss lazily-rendered editors).
-    var pageCode = pageCodeSnapshot;
-    // The plotly widget stack, self-hosted under wheels/widgets/ (`make
-    // wheels`) so widget pages never touch PyPI at runtime — a stalled
-    // 10 MB PyPI fetch used to hang the whole boot at "installing".
-    // deps=False: the manifest IS the dependency closure. The baked-figure
-    // div is the second signal, in case the code scrape ever misses.
-    if (pageCode.indexOf("plotly") !== -1 || document.querySelector(".icm-plotly-fig")) {
+    // The plotly widget stack: PyPI's CDN by exact file URL when it answers
+    // (manifest entries carry the URL, tools/widget_wheel_manifest.py), else
+    // the self-hosted copies under wheels/widgets/. deps=False: the manifest
+    // IS the dependency closure. The baked-figure div is the second signal,
+    // in case the code scrape ever misses.
+    if (wantsPlotly) {
       var wbase = new URL(config.rootPath + "/_static/wheels/widgets/", document.baseURI);
       var widgets = await (await fetch(new URL("manifest.json", wbase), { cache: "no-store" })).json();
-      var urls = widgets.map(function (name) {
-        return '"' + new URL(name, wbase).href + '"';
+      var entries = widgets.map(function (w) {
+        return typeof w === "string" ? { name: w, url: null } : w;
+      });
+      var first = entries.filter(function (e) { return e.url; })[0];
+      var useCdn = first ? await reachable(first.url) : false;
+      if (!useCdn) console.info("[live-cells] widget wheels: self-hosted copies");
+      var urls = entries.map(function (e) {
+        var u = useCdn && e.url ? e.url : new URL(e.name, wbase).href;
+        return '"' + u + '"';
       });
       lines.push(
         "await micropip.install([" + urls.join(", ") + "], deps=False)"
@@ -806,19 +896,24 @@
     if (["browseraudio", "pq.record"].some(function (s) { return pageCode.indexOf(s) !== -1; })) {
       lines.push('await micropip.install("browseraudio")');
     }
-    // Browser-kernel shims: a no-op myst_nb.glue (build-time-only library)
-    // and the RcParams patch the TeachBooks extension applies for matplotlib.
+    // Browser-kernel shims: a no-op myst_nb.glue (build-time-only library),
+    // and — only where the page uses matplotlib (importing it loads ~10 MB)
+    // — the RcParams patch the TeachBooks extension applies for it.
     lines.push(
       "import sys, types",
       'if "myst_nb" not in sys.modules:',
-      '    _m = types.ModuleType("myst_nb"); _m.glue = lambda *a, **k: None; sys.modules["myst_nb"] = _m',
-      "import matplotlib",
-      'if not hasattr(matplotlib.RcParams, "_get"):',
-      "    matplotlib.RcParams._get = dict.get",
-      // Build the font cache now, during setup, so its "this may take a
-      // moment" stderr lands here instead of in the first cell's output.
-      "import matplotlib.font_manager"
+      '    _m = types.ModuleType("myst_nb"); _m.glue = lambda *a, **k: None; sys.modules["myst_nb"] = _m'
     );
+    if (wantsMpl) {
+      lines.push(
+        "import matplotlib",
+        'if not hasattr(matplotlib.RcParams, "_get"):',
+        "    matplotlib.RcParams._get = dict.get",
+        // Build the font cache now, during setup, so its "this may take a
+        // moment" stderr lands here instead of in the first cell's output.
+        "import matplotlib.font_manager"
+      );
+    }
     // Students copy `!pip install x` from the wider internet, but WASM has
     // no shell — the raw result is a bare OSError. Rewrite !pip installs
     // to micropip (works for pure-Python wheels and anything vendored),
@@ -891,7 +986,13 @@
         );
       });
     }
-    var fut = sessionRef.kernel.requestExecute({ code: lines.join("\n") });
+    await execOnKernel(lines.join("\n"));
+    if (wantsPyquist) pyquistReady = Promise.resolve();
+  }
+
+  // Run setup code on the kernel; a Python error is a setup failure.
+  async function execOnKernel(code) {
+    var fut = sessionRef.kernel.requestExecute({ code: code });
     var kernelErr = null;
     fut.onIOPub = function (m) {
       var c = m.content || {};
@@ -907,16 +1008,49 @@
     }
   }
 
+  // Late pyquist: a page whose code never mentioned it skipped its ~15 MB
+  // at boot, but a student can still type `import pyquist` into a cell —
+  // runChain installs it on the first ModuleNotFoundError and re-runs.
+  var pyquistReady = null;
+  function ensurePyquist() {
+    if (!pyquistReady) {
+      pyquistReady = (async function () {
+        var base = new URL(thebeConfig.rootPath + "/_static/wheels/", document.baseURI);
+        var manifest = await (await fetch(new URL("manifest.json", base), { cache: "no-store" })).json();
+        var lines = [
+          "import pyodide_js",
+          "from pyodide.ffi import to_js",
+          'await pyodide_js.loadPackage(to_js(["matplotlib", "soxr", "requests", "tqdm"]))',
+          "import micropip",
+        ];
+        manifest.forEach(function (name) {
+          if (/^(sounddevice|soundfile|pyquist)-/.test(name)) {
+            lines.push('await micropip.install("' + new URL(name, base).href + '")');
+          }
+        });
+        await execOnKernel(lines.join("\n"));
+      })();
+      pyquistReady.catch(function () { pyquistReady = null; });
+    }
+    return pyquistReady;
+  }
+  function missingPyquist(cell) {
+    return /No module named 'pyquist'/.test(cell.textContent);
+  }
+
   // The extension injects hidden thebe-init cells (e.g. its matplotlib
   // patch) that expect to run right after the kernel is up. They're never
   // thebe-mounted, so run their source directly on the kernel.
   async function runInitCells_() {
     var initCells = document.querySelectorAll(".thebe-init, .tag_thebe-init");
+    var wantsMpl = pageWants().mpl;
     for (var i = 0; i < initCells.length; i++) {
       var pre = initCells[i].querySelector("pre");
-      if (pre && pre.textContent.trim()) {
-        await sessionRef.kernel.requestExecute({ code: pre.textContent }).done;
-      }
+      if (!pre || !pre.textContent.trim()) continue;
+      // Its matplotlib patch would import (and so auto-load) matplotlib on
+      // a page that never uses it; skip it there.
+      if (!wantsMpl && /\bmatplotlib\b/.test(pre.textContent)) continue;
+      await sessionRef.kernel.requestExecute({ code: pre.textContent }).done;
     }
   }
 
@@ -1000,6 +1134,11 @@
           startTimer(cell);
           try {
             await nb.execute();
+            if (missingPyquist(cell)) {
+              status("Installing pyquist…");
+              await ensurePyquist();
+              await nb.execute();
+            }
           } catch (e) {
             swap.now();
             stopTimer(cell, true); // kernel-level failure → red bar

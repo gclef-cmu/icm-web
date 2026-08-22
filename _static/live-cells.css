@@ -445,7 +445,7 @@ body.live-active .CodeMirror span[class*="cm-"] {
  * as-is; below only neutralizes JupyterLab's own chrome and hides the
  * container until the cell actually produces something. */
 
-body.live-active .cell_output.live-output:has(.jp-OutputArea:empty) {
+body.live-active .cell_output.live-output:has(> .jp-OutputArea:empty) {
   display: none;
 }
 
@@ -683,3 +683,21 @@ html[data-theme="dark"] .icm-ghost-select {
   padding-right: 25px;
 }
 
+
+/* The audio card under the sliders sits inside the panel. */
+.cell_output.live-output .widget-vbox .widget-output {
+  margin-top: 4px;
+}
+
+/* The panel is a light surface in dark mode too, so the audio card the
+ * button renders keeps its light-theme surface and inks there. */
+html[data-theme="dark"] .cell_output.live-output .widget-vbox .widget-output {
+  --icm-box-bg: #faf7f4;
+  --icm-accent-3: var(--cmu-iron);
+}
+
+/* A ghost Output reserves the audio card's height (the card the live
+ * widget renders under its sliders is 74px tall). */
+.icm-ghost-row.icm-ghost-output {
+  min-height: 74px;
+}

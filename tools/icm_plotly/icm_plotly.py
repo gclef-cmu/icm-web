@@ -125,9 +125,14 @@ def show(figure, controls=None):
         # figure's height is reserved up front so the page doesn't grow
         # when plotly.js arrives and draws.
         payload = fig.to_json().replace("</", "<\\/")
+        # data-plotlyjs: the exact plotly.js this figure was built for, so
+        # live-cells.js can load that version from a CDN (falling back to
+        # the book's vendored copy of the same file).
+        from plotly.offline import get_plotlyjs_version
         display(HTML(
             '<div class="icm-widget-baked">' + ghost
-            + f'<div class="icm-plotly-fig" style="min-height:{fig.layout.height}px">'
+            + f'<div class="icm-plotly-fig" style="min-height:{fig.layout.height}px"'
+            f' data-plotlyjs="{get_plotlyjs_version()}">'
             '<script type="application/vnd.icm-plotly+json">'
             + payload + "</script></div></div>"
         ))
@@ -238,4 +243,8 @@ def _ghost_html(w):
         return f'<div class="icm-ghost-row icm-ghost-html"{row}>{label}<span class="icm-ghost-html-content">{w.value}</span></div>'
     if isinstance(w, widgets.Label):
         return f'<div class="icm-ghost-row icm-ghost-html"{row}>{label}<span class="icm-ghost-html-content">{esc(w.value)}</span></div>'
+    if isinstance(w, widgets.Output):
+        # an Output holds the widget's audio card on the live page; reserve
+        # its height (live-cells.css) so the card arrives without a shift
+        return f'<div class="icm-ghost-row icm-ghost-output"{row}></div>'
     return f'<div class="icm-ghost-row icm-ghost-other"{row}>{label}</div>'
