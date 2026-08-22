@@ -82,6 +82,10 @@ CHAPTER_FOLDER_RE = re.compile(r"^(\d+)-(.+)$")
 FRONTMATTER_RE = re.compile(r"\A---\n.*?\n---\n", re.DOTALL)
 FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
+# ``{icon-ai}`` / ``{icon-noai}`` in a heading (see _ext/icm_roles.py). A
+# sidebar label from _toc.yml is plain text, never parsed as markdown, so the
+# badge has to come out of the label or it shows up as literal braces.
+ICON_MARKUP_RE = re.compile(r"\{icon-(?:ai|noai)\}\s*")
 
 # `:::{interactive}[notebooks/foo.ipynb]` / `:::{animation}[...]` — opening
 # fence is 3+ colons, path in [brackets] or bare. A section containing either
@@ -889,8 +893,9 @@ def course_order_key(path: Path):
 def _short_title(md_path: Path) -> str | None:
     """Sidebar label for a course page: its H1 truncated at the first colon.
 
-    "Assignment 3\\*: Exploring timbre and scores" -> "Assignment 3*";
-    an H1 without a colon (already short) gets no override -> None.
+    "{icon-ai} Assignment 3: Exploring timbre and scores" -> "Assignment 3";
+    an H1 without a colon (already short) gets no override -> None, and the
+    sidebar then renders the page's own title node, badge included.
     """
     try:
         text = md_path.read_text()
@@ -899,7 +904,7 @@ def _short_title(md_path: Path) -> str | None:
     for line in text.splitlines():
         m = HEADING_RE.match(line)
         if m and len(m.group(1)) == 1:
-            h1 = m.group(2).strip()
+            h1 = ICON_MARKUP_RE.sub("", m.group(2)).strip()
             if ":" not in h1:
                 return None
             return h1.split(":", 1)[0].replace("\\*", "*").strip()
