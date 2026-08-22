@@ -99,6 +99,8 @@ sphinx:
   #   icm_schedule    — the {schedule} directive (course schedule table)
   #   icm_table       — headerless pipe tables (body rows only, no |---| line)
   #   icm_linkstyle   — tags bare-URL links (class bare-url) for line-breaking CSS
+  #   icm_exercise    — {solution} with no label: a reveal-on-click answer
+  #                     inside its {exercise}
   local_extensions:
     icm_roles: _ext/
     icm_glossary: _ext/
@@ -110,6 +112,7 @@ sphinx:
     icm_schedule: _ext/
     icm_table: _ext/
     icm_linkstyle: _ext/
+    icm_exercise: _ext/
   config:
     # A notebook execution error is only a warning by default, which lets a
     # broken page deploy — fail the build instead.

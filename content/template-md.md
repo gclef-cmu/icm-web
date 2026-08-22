@@ -690,6 +690,35 @@ State the Nyquist frequency for a 48 kHz sample rate.
 24 kHz — half the sample rate.
 :::
 
+An **unlabeled** `{solution}` goes inside the exercise it answers, and renders
+as a "Reveal solution" button that keeps the answer hidden until the reader
+clicks it. The outer fence grows to `::::` so the nested `:::` closes inside
+it:
+
+````markdown
+::::{exercise}
+Which harmonics are present in a 440 Hz square wave, and how do their
+amplitudes fall off?
+
+:::{solution}
+Odd harmonics only — 440 Hz, 1320 Hz, 2200 Hz, … — with the $k$-th harmonic
+falling off as $1/k$.
+:::
+::::
+````
+
+renders as:
+
+::::{exercise}
+Which harmonics are present in a 440 Hz square wave, and how do their
+amplitudes fall off?
+
+:::{solution}
+Odd harmonics only — 440 Hz, 1320 Hz, 2200 Hz, … — with the $k$-th harmonic
+falling off as $1/k$.
+:::
+::::
+
 A **gated** exercise (`{exercise-start}` … `{exercise-end}`) can wrap several
 blocks:
 
