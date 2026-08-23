@@ -228,6 +228,21 @@ html[data-theme="dark"] {
 }
 
 /* ----------------------------------------------------------------------
+   Musical-example video embeds. The players are authored as plain YouTube
+   iframes carrying width="560" height="315" (see icm-text/AGENTS.md), and a
+   fixed 560px overflows a phone viewport. Cap them at that authored width on
+   wide screens rather than letting them run the full column, and let them
+   shrink below it, holding 16:9 so the player doesn't letterbox.
+   ---------------------------------------------------------------------- */
+.bd-article iframe[src*="youtube"] {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+/* ----------------------------------------------------------------------
    Reveal-on-click solutions — an unlabeled {solution} inside an {exercise}
    (see _ext/icm_exercise.py). A native <details>, so it opens with
    JavaScript off; the summary is dressed as a small pill button.
