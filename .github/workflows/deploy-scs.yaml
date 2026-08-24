@@ -31,8 +31,11 @@ jobs:
 
       - name: Fetch pyquist submodule (public, over HTTPS)
         run: |
+          # No --remote: pyquist deploys at the SHA pinned by this commit,
+          # exactly like icm-text below. To ship newer pyquist, bump the
+          # submodule pointer in icm-web and push.
           git config submodule.pyquist.url https://github.com/gclef-cmu/pyquist.git
-          git submodule update --init --remote pyquist
+          git submodule update --init pyquist
 
       - name: Fetch icm-text + icm-f26 submodules (pinned, over HTTPS)
         run: |

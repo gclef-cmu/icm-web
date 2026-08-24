@@ -1,9 +1,6 @@
 [submodule "pyquist"]
 	path = pyquist
 	url = git@github.com:gclef-cmu/pyquist.git
-	# Temporary: track the in-browser recording branch so deploys get
-	# pq.record_widget(). Revert to main once the PR is merged.
-	branch = browser-recording
 [submodule "icm-text"]
 	path = icm-text
 	url = git@github.com:chrisdonahue/pcm.git

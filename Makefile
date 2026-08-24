@@ -1,4 +1,4 @@
-.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge wheels check-thebe-fork check-split vendor-pyodide template-interactive template-animation
+.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge submodules wheels check-thebe-fork check-split vendor-pyodide template-interactive template-animation
 
 PYQUIST_SUBMODULE  := pyquist
 PYQUIST_README_SRC := $(PYQUIST_SUBMODULE)/README.md
@@ -6,16 +6,29 @@ PYQUIST_README     := content/pyquist/_pyquist_readme.md
 
 all: book
 
+# Fetch any submodule that is missing (a fresh clone); an initialized
+# submodule is never touched, so a checked-out branch, uncommitted work, or
+# a checkout ahead of the pin all survive. CI fetches its own way first
+# (HTTPS URLs, --remote for pyquist), which makes this a no-op there.
+submodules:
+	@for sub in icm-text icm-f26 pyquist; do \
+		if [ ! -e "$$sub/.git" ]; then \
+			echo "fetching missing submodule $$sub..."; \
+			git submodule update --init "$$sub"; \
+		fi; \
+	done
+
 # Regenerate the gitignored book sources from the pinned submodules:
 # icm-text/ -> content/book/ch{nn}/ (+ the chapter part of _toc.yml),
 # icm-f26/ -> content/course/ (minus unreleased staging dirs), and about/
 # errata/refs.bib into content/book/. CI runs this before every `make book`;
-# run it locally after cloning or bumping a pin. Only content/book/chNN/
-# anim/*.mp4 is committed — unchanged clips are reused byte-identically, so
-# the split needs no manim unless a scene changed (then install manim +
-# icm_anim and commit the new mp4s with the pin bump).
+# run it locally after cloning or bumping a pin — any missing submodule
+# (pyquist included, which `make book` needs) is fetched first. Only
+# content/book/chNN/anim/*.mp4 is committed — unchanged clips are reused
+# byte-identically, so the split needs no manim unless a scene changed
+# (then install manim + icm_anim and commit the new mp4s with the pin bump).
 # WARNING: wipes content/book/ch*/ and content/course/ entirely.
-split:
+split: submodules
 	python3 tools/split_chapters.py
 
 # Inverse of split: reassembles content/ch{nn}/ into icm-text-merged/ for a
@@ -159,7 +172,7 @@ check-thebe-fork:
 check-split:
 	@test -f content/book/ch00/index.md || { \
 		echo "ERROR: generated book sources missing (content/book/ch00/index.md)."; \
-		echo "  run: make split   (needs icm-text + icm-f26 submodules initialized)"; \
+		echo "  run: make split   (it fetches any missing submodule)"; \
 		exit 1; \
 	}
 
