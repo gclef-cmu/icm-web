@@ -86,6 +86,8 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 # sidebar label from _toc.yml is plain text, never parsed as markdown, so the
 # badge has to come out of the label or it shows up as literal braces.
 ICON_MARKUP_RE = re.compile(r"\{icon-(?:ai|noai)\}\s*")
+# A MyST target on its own line, e.g. `(sec-wavetable-synthesis)=`.
+TARGET_RE = re.compile(r"^\([^)\s]+\)=$")
 
 # `:::{interactive}[notebooks/foo.ipynb]` / `:::{animation}[...]` — opening
 # fence is 3+ colons, path in [brackets] or bare. A section containing either
@@ -533,25 +535,59 @@ def build_section_notebook(
     return nb
 
 
+def _take_trailing_targets(lines: list[str]) -> tuple[list[str], list[str]]:
+    """Peel trailing `(label)=` lines (and the blanks around them) off a section.
+
+    A target written above a `## ` heading labels that heading, but the heading
+    opens the *next* section — so the target has to travel with it instead of
+    being left at the foot of the section that happens to precede it. Returns
+    the lines to keep and the targets to carry forward.
+    """
+    targets: list[str] = []
+    end = len(lines)
+    while end:
+        stripped = lines[end - 1].strip()
+        if not stripped:
+            end -= 1
+        elif TARGET_RE.match(stripped):
+            targets.insert(0, stripped)
+            end -= 1
+        else:
+            break
+    # Only disturb the section when there is actually a target to move.
+    return (lines[:end], targets) if targets else (lines, [])
+
+
 def split_body(body: str):
     """Split the body on `## ` headings outside fenced code blocks.
 
-    Returns (intro_block_lines, [(section_title, section_content_lines), ...]).
-    The intro block still contains the chapter `# ` heading.
+    Returns (intro_block_lines,
+             [(section_title, section_content_lines, leading_targets), ...]).
+    The intro block still contains the chapter `# ` heading. `leading_targets`
+    are the `(label)=` lines that sat above this section's heading in the
+    source; the caller writes them back above the heading it generates.
     """
     lines = body.splitlines(keepends=True)
     intro_lines: list[str] = []
-    sections: list[tuple[str, list[str]]] = []
+    sections: list[tuple[str, list[str], list[str]]] = []
     cur_title: str | None = None
     cur_lines: list[str] = []
+    carried: list[str] = []   # targets held back for the section starting next
     fence: str | None = None
 
-    def flush():
-        nonlocal cur_title, cur_lines
+    def flush(carry_targets: bool = True):
+        """Close the open section. `carry_targets` hands a trailing `(label)=`
+        to the section that the `## ` heading is about to open; the final
+        flush has no such section, so it keeps whatever is there."""
+        nonlocal cur_title, cur_lines, carried
+        trailing: list[str] = []
+        if carry_targets:
+            cur_lines, trailing = _take_trailing_targets(cur_lines)
         if cur_title is None:
             intro_lines.extend(cur_lines)
         else:
-            sections.append((cur_title, cur_lines))
+            sections.append((cur_title, cur_lines, carried))
+        carried = trailing
         cur_title = None
         cur_lines = []
 
@@ -580,7 +616,7 @@ def split_body(body: str):
             ):
                 fence = None
 
-    flush()
+    flush(carry_targets=False)
     return intro_lines, sections
 
 
@@ -792,9 +828,12 @@ def split_chapter(folder: Path) -> dict | None:
 
     section_refs: list[str] = []
     anim_requests: list[AnimRequest] = []
-    for i, (title, content_lines) in enumerate(sections):
+    for i, (title, content_lines, leading_targets) in enumerate(sections):
         body_text = "".join(demote_headings(content_lines)).strip("\n")
-        section_md = f"# {chapter_num}.{i} {title}\n"
+        # Targets first: `(label)=` has to precede the heading it labels, and
+        # this heading is synthesized here rather than coming from the body.
+        section_md = "".join(f"{target}\n\n" for target in leading_targets)
+        section_md += f"# {chapter_num}.{i} {title}\n"
         if body_text:
             section_md += f"\n{body_text}\n"
         # A section that embeds a companion notebook becomes a notebook; every
