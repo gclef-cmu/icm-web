@@ -43,11 +43,12 @@ textbook's canonical home. The site root redirects to the course home page.
 
 `make split` regenerates `content/book/ch*/` (from icm-text),
 `content/course/` (from icm-f26), `book/index.md` (the About cover page) /
-`book/errata.md` / `book/references.bib`, and the generated regions of
+`book/errata.md` / `book/references.bib`, `pyquist/Overview.md` (via the
+`pyquist` target, from the pyquist submodule), and the generated regions of
 `_toc.yml`. All of that is **gitignored**; the only committed part of the
 generated tree is the pre-rendered animation clips
 (`content/book/chNN/anim/*.mp4`). Hand-authored pages (`book/appendix/`,
-`book/reference/`, `pyquist/`, `index.md`, the templates) stay committed.
+`book/reference/`, `pyquist/api/`, `index.md`, the templates) stay committed.
 
 The Pyquist docs live at `content/pyquist/` (URL `/pyquist/`) and are listed
 as the last Course Information sidebar entry — `make split` appends that TOC
@@ -96,11 +97,15 @@ in each H1.
 ## Pyquist docs
 
 All Pyquist pages are generated — no hand-written API docs.
-`content/pyquist/Overview.md` mirrors the submodule README each build; the
-`api/*.md` autodoc shells introspect the **installed** module (the editable
-install from `conda env create`). A failed import renders them silently
-empty (see Troubleshooting). Update by bumping the pin:
-`git submodule update --remote pyquist && git add pyquist && git commit`.
+`content/pyquist/Overview.md` is stitched by `make pyquist` (part of
+`make split`) from the submodule's README plus its
+`examples/HelloPyquist.ipynb` tour, written as a MyST notebook so the tour
+cells execute at build time and run live in the browser. The `api/*.md`
+autodoc shells introspect the **installed** module (the editable install
+from `conda env create`). A failed import renders them silently empty (see
+Troubleshooting). Update by bumping the pin: `git submodule update --remote
+pyquist && git add pyquist && git commit`, then `make pyquist` to preview
+locally.
 
 ## Live code (in-browser Python)
 
@@ -227,8 +232,7 @@ from `environment.yml`.
 `http://localhost:8000/template-notebook.html` (must be `http://`, not
 `file://`). Cells should be editable immediately with no layout shift; ▶ Run
 on the `pq.play(tone)` cell should boot the kernel and produce a working
-audio card. `pq.record(...)` records from the mic via the browser (needs the
-pyquist `browser-recording` branch until it merges to main). §5 of the
+audio card. `pq.record(...)` records from the mic via the browser. §5 of the
 template notebook is the deliberate test surface for clear error messages on
 unsupported operations (mp3 read, device access) — the messages live in the
 stubs under `tools/`.

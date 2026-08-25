@@ -1,15 +1,11 @@
-.PHONY: book clean spotless all serve check pdf sync-pyquist-readme split merge submodules wheels check-thebe-fork check-split vendor-pyodide template-interactive template-animation
-
-PYQUIST_SUBMODULE  := pyquist
-PYQUIST_README_SRC := $(PYQUIST_SUBMODULE)/README.md
-PYQUIST_README     := content/pyquist/_pyquist_readme.md
+.PHONY: book clean spotless all serve check pdf pyquist split merge submodules wheels check-thebe-fork check-split vendor-pyodide template-interactive template-animation
 
 all: book
 
 # Fetch any submodule that is missing (a fresh clone); an initialized
 # submodule is never touched, so a checked-out branch, uncommitted work, or
 # a checkout ahead of the pin all survive. CI fetches its own way first
-# (HTTPS URLs, --remote for pyquist), which makes this a no-op there.
+# (HTTPS URLs, pinned SHAs), which makes this a no-op there.
 submodules:
 	@for sub in icm-text icm-f26 pyquist; do \
 		if [ ! -e "$$sub/.git" ]; then \
@@ -27,8 +23,9 @@ submodules:
 # content/book/chNN/anim/*.mp4 is committed — unchanged clips are reused
 # byte-identically, so the split needs no manim unless a scene changed
 # (then install manim + icm_anim and commit the new mp4s with the pin bump).
+# Also regenerates the Pyquist landing page via the `pyquist` prerequisite.
 # WARNING: wipes content/book/ch*/ and content/course/ entirely.
-split: submodules
+split: submodules pyquist
 	python3 tools/split_chapters.py
 
 # Inverse of split: reassembles content/ch{nn}/ into icm-text-merged/ for a
@@ -50,18 +47,13 @@ template-interactive:
 template-animation:
 	@python3 tools/split_chapters.py --page content/template-animation --chapter 99 --section 1
 
-# Mirror the Pyquist README from the pinned submodule; runs on every
-# `make book`. The sed step rewrites `examples/…` relative links to absolute
-# GitHub URLs so they resolve from the book site.
-sync-pyquist-readme:
-	@test -f $(PYQUIST_README_SRC) || { \
-		echo "ERROR: $(PYQUIST_README_SRC) not found — is the submodule initialized?"; \
-		echo "  run: git submodule update --init $(PYQUIST_SUBMODULE)"; \
-		exit 1; \
-	}
-	@cp $(PYQUIST_README_SRC) $(PYQUIST_README)
-	@sed -i.bak 's|](examples/|](https://github.com/gclef-cmu/pyquist/blob/main/examples/|g' $(PYQUIST_README)
-	@rm -f $(PYQUIST_README).bak
+# Generate the Pyquist landing page (content/pyquist/Overview.md) from the
+# pinned submodule: README.md with its Quick example replaced by the
+# examples/HelloPyquist.ipynb tour, written as a MyST notebook so cells
+# execute at build and run live in the browser. Part of `make split`;
+# re-run after bumping the pyquist pin.
+pyquist: submodules
+	@python3 tools/gen_pyquist_page.py
 
 # Fetch the pinned thebe runtime bundles for the live-code layer. Self-hosted
 # because the kernel web worker must be same-origin. This stack embeds
@@ -175,8 +167,13 @@ check-split:
 		echo "  run: make split   (it fetches any missing submodule)"; \
 		exit 1; \
 	}
+	@test -f content/pyquist/Overview.md || { \
+		echo "ERROR: generated Pyquist page missing (content/pyquist/Overview.md)."; \
+		echo "  run: make pyquist   (or make split)"; \
+		exit 1; \
+	}
 
-book: check-split check-thebe-fork sync-pyquist-readme wheels vendor-thebe vendor-pyodide
+book: check-split check-thebe-fork wheels vendor-thebe vendor-pyodide
 	@# PIP_DISABLE_PIP_VERSION_CHECK: keeps pip's "new release" notice out of
 	@# baked %pip cell output. ICM_BOOK_BUILD: kernel-only preview cells
 	@# guard on this and build nothing.

@@ -14,11 +14,11 @@ logo: ""                                  # path to a logo image, e.g. content/i
 # false so the orphaned /course/harry preview pages (see mirror_staging in
 # tools/split_chapters.py) build without appearing in _toc.yml. The extra
 # excludes are the complete set of non-page sources that would otherwise
-# build as stray documents: template main.md/notebooks/ inputs, the mirrored
-# Pyquist README fragment, and everything under assets/ (assignment starter
-# notebooks there deliberately raise when executed).
+# build as stray documents: template main.md/notebooks/ inputs and everything
+# under assets/ (assignment starter notebooks there deliberately raise when
+# executed).
 exclude_patterns: [_build, "**.ipynb_checkpoints", "**/notebooks/**", "**/main.md",
-                   "**/assets/**", "pyquist/_pyquist_readme.md"]
+                   "**/assets/**"]
 only_build_toc_files: false
 
 #######################################################################################
