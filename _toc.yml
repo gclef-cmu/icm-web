@@ -12,29 +12,20 @@ parts:
       - file: course/assignments/index
         sections:
           - file: course/assignments/01
-            title: "Assignment 1"
           - file: course/assignments/02
-            title: "Assignment 2"
           - file: course/assignments/03
-            title: "Assignment 3"
           - file: course/assignments/04
-            title: "Assignment 4"
           - file: course/assignments/05
-            title: "Assignment 5"
           - file: course/assignments/06
-            title: "Assignment 6"
           - file: course/assignments/07
-            title: "Assignment 7"
           - file: course/assignments/08
-            title: "Assignment 8"
           - file: course/assignments/09
-            title: "Assignment 9"
       - file: course/resources/index
         sections:
           - file: course/resources/1-accounts
-          - file: course/resources/2-textbooks
-          - file: course/resources/3-technical
-          - file: course/resources/4-ai
+          - file: course/resources/2-technical
+          - file: course/resources/3-ai
+          - file: course/resources/4-other
       - file: course/showcase
       - file: course/syllabus
       - file: pyquist/Overview
@@ -54,6 +45,7 @@ parts:
           - file: book/ch00/01
           - file: book/ch00/02
           - file: book/ch00/03
+          - file: book/ch00/04
       - file: book/ch01/index
         sections:
           - file: book/ch01/00
@@ -81,6 +73,7 @@ parts:
           - file: book/ch03/04
           - file: book/ch03/05
           - file: book/ch03/06
+          - file: book/ch03/07
       - file: book/ch04/index
         sections:
           - file: book/ch04/00
@@ -125,6 +118,7 @@ parts:
           - file: book/ch07/05
           - file: book/ch07/06
           - file: book/ch07/07
+          - file: book/ch07/08
       - file: book/ch08/index
         sections:
           - file: book/ch08/00
