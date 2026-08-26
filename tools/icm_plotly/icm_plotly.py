@@ -21,7 +21,7 @@ import plotly.io as pio
 # everywhere this module does (wheels manifest + environment.yml).
 from icm_widgets import BLUE, GOLD, IRON, RED, STEEL, TEAL  # noqa: F401
 
-__all__ = ["show", "RED", "BLUE", "GOLD", "IRON", "TEAL", "STEEL"]
+__all__ = ["show", "release_gate", "RED", "BLUE", "GOLD", "IRON", "TEAL", "STEEL"]
 
 # House axis look: single grey spine, outside ticks, no grid — the plotly
 # counterpart of the matplotlib house style.
@@ -69,6 +69,61 @@ pio.templates["icm"] = go.layout.Template(
     )
 )
 pio.templates.default = "icm"
+
+
+_GATE_ESM = """
+export default {
+  render({ model, el }) {
+    el.style.display = "none";
+    const doc = el.ownerDocument;
+    const down = (e) => {
+      if (e.target && e.target.closest &&
+          e.target.closest(".noUi-handle, .noUi-target")) {
+        model.set("dragging", true);
+        model.save_changes();
+      }
+    };
+    const up = () => {
+      if (model.get("dragging")) {
+        model.set("dragging", false);
+        model.save_changes();
+      }
+    };
+    doc.addEventListener("pointerdown", down, true);
+    doc.addEventListener("pointerup", up, true);
+    doc.addEventListener("pointercancel", up, true);
+    return () => {
+      doc.removeEventListener("pointerdown", down, true);
+      doc.removeEventListener("pointerup", up, true);
+      doc.removeEventListener("pointercancel", up, true);
+    };
+  }
+};
+"""
+
+_gate_cls = None
+
+
+def release_gate():
+    """A hidden widget whose ``dragging`` trait mirrors whether the pointer
+    is down on any slider on the page. A widget's audio card observes it to
+    re-render on release instead of mid-drag; include the gate in the
+    returned VBox so its (invisible) view exists.
+    """
+    global _gate_cls
+    if _gate_cls is None:
+        import anywidget
+        import traitlets
+
+        class _ReleaseGate(anywidget.AnyWidget):
+            _esm = _GATE_ESM
+            _icm_ghost_skip = True
+            dragging = traitlets.Bool(False).tag(sync=True)
+
+        _gate_cls = _ReleaseGate
+    gate = _gate_cls()
+    gate.layout.display = "none"
+    return gate
 
 
 def _normalize_controls(ui):
@@ -194,6 +249,8 @@ def _ghost_html(w):
     import ipywidgets as widgets
 
     esc = _html.escape
+    if getattr(w, "_icm_ghost_skip", False):
+        return ""
     if isinstance(w, widgets.Box):
         orient = "hbox" if isinstance(w, widgets.HBox) else "vbox"
         inner = "".join(_ghost_html(c) for c in w.children)

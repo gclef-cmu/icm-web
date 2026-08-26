@@ -183,7 +183,7 @@ parts:
   - caption: Templates
     chapters:
       - file: templates/index
-      - file: template-notebook
-      - file: template-md
-      - file: template-interactive/index
-      - file: template-animation/index
+      - file: templates/template-notebook
+      - file: templates/template-md
+      - file: templates/template-interactive/index
+      - file: templates/template-animation/index

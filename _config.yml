@@ -32,7 +32,7 @@ execute:
   # Run notebooks in a temp dir by default: the repo's `pyquist/` and
   # `content/pyquist/` directories shadow the installed pyquist package when
   # they're the execution CWD, breaking `import pyquist` at build time —
-  # this still protects content/template-notebook.ipynb, which runs from
+  # this still protects content/templates/template-notebook.ipynb, which runs from
   # content/. Section notebooks emitted by `make split` override this per
   # file (metadata mystnb.execution_in_temp: false) so they execute from
   # their own content/chNN/ dir and can read ./assets/ at build time.

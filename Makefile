@@ -38,14 +38,14 @@ merge:
 # performs for chapters. Edit the sources, then re-run this. Untouched by
 # `make split`.
 template-interactive:
-	@python3 tools/split_chapters.py --page content/template-interactive --chapter 99 --section 0
+	@python3 tools/split_chapters.py --page content/templates/template-interactive --chapter 99 --section 0
 
 # Regenerate the "Template - Animation" page — same model as above, with
 # manim companions in notebooks/ pre-rendered into anim/ (commit those mp4s
 # too). sec_index=1 keeps its cell ids (ch99s01…) clear of
 # template-interactive's (ch99s00…). Untouched by `make split`.
 template-animation:
-	@python3 tools/split_chapters.py --page content/template-animation --chapter 99 --section 1
+	@python3 tools/split_chapters.py --page content/templates/template-animation --chapter 99 --section 1
 
 # Generate the Pyquist landing page (content/pyquist/Overview.md) from the
 # pinned submodule: README.md with its Quick example replaced by the
@@ -185,7 +185,7 @@ book: check-split check-thebe-fork wheels vendor-thebe vendor-pyodide
 	@# Sphinx doesn't track files referenced by raw <img>/<audio>/<video>
 	@# HTML tags, so copy each chapter's assets and pre-rendered anim clips
 	@# into the build output ourselves (dest drops the content/ prefix).
-	@for d in content/book/ch*/assets content/book/ch*/anim content/template-animation/anim; do \
+	@for d in content/book/ch*/assets content/book/ch*/anim content/templates/template-animation/anim; do \
 		[ -d "$$d" ] || continue; \
 		dest="_build/html/$$(dirname "$${d#content/}")"; \
 		mkdir -p "$$dest"; \

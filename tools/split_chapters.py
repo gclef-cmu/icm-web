@@ -26,9 +26,14 @@ import ast
 import contextlib
 import hashlib
 import json
+import io
 import re
 import shutil
+import subprocess
 import sys
+import tarfile
+import tempfile
+import warnings
 from pathlib import Path
 from typing import NamedTuple
 
@@ -1200,6 +1205,79 @@ def split_standalone_page(folder: Path, chapter_num: int, sec_index: int) -> Non
     print(f"  wrote {folder / 'index.ipynb'}")
 
 
+def check_anim_committed(treeish: str = "HEAD") -> int:
+    """Verify every clip the committed icm-text pin needs is also committed.
+
+    CI's `make split` never renders (no manim there) — it can only restore
+    anim/ files from the checkout, so a commit whose icm-text pin needs a
+    clip that isn't committed alongside it is guaranteed to fail CI. The
+    pre-push hook runs this to catch that locally. Parses the pinned tree,
+    not the submodule checkout: the checkout can be dirty or ahead with
+    work that isn't part of the push. Read-only: renders and writes nothing.
+    """
+
+    def git(*argv: str, binary: bool = False):
+        p = subprocess.run(["git", *argv], cwd=REPO, capture_output=True)
+        if p.returncode:
+            sys.exit(f"git {' '.join(argv)}: {p.stderr.decode().strip()}")
+        return p.stdout if binary else p.stdout.decode().strip()
+
+    if not SOURCE.exists() or not any(SOURCE.iterdir()):
+        sys.exit(
+            f"icm-text/ not found or empty at {SOURCE}\n"
+            "  run: git submodule update --init icm-text"
+        )
+    pin = git("rev-parse", f"{treeish}:icm-text")
+    checkout = git("-C", "icm-text", "rev-parse", "HEAD")
+    dirty = bool(git("-C", "icm-text", "status", "--porcelain"))
+    if pin != checkout or dirty:
+        state = "has local edits" if dirty else f"is at {checkout[:9]}"
+        print(
+            f"note: icm-text checkout {state}, but only the pin in {treeish} "
+            f"({pin[:9]}) is checked — that is what CI builds",
+            file=sys.stderr,
+        )
+    committed = set(
+        git("ls-tree", "-r", "--name-only", treeish, "--", "content/book").splitlines()
+    )
+    # Companion notebooks upstream lack cell ids; keep hook output clean.
+    warnings.filterwarnings("ignore", message="Cell is missing an id field")
+    required: set[str] = set()
+    with tempfile.TemporaryDirectory() as td:
+        tar = git("-C", "icm-text", "archive", pin, binary=True)
+        with tarfile.open(fileobj=io.BytesIO(tar)) as tf:
+            try:
+                tf.extractall(td, filter="data")
+            except TypeError:  # filter= needs python >= 3.11.4
+                tf.extractall(td)
+        for folder in sorted(Path(td).iterdir()):
+            m = CHAPTER_FOLDER_RE.match(folder.name)
+            if not (folder.is_dir() and m and (folder / "index.md").exists()):
+                continue
+            n = int(m.group(1))
+            body = FRONTMATTER_RE.sub("", (folder / "index.md").read_text(), count=1)
+            reqs: list[AnimRequest] = []
+            build_section_notebook(body, folder, n, 0, reqs)
+            required.update(f"content/book/ch{n:02d}/anim/{r.filename}" for r in reqs)
+    missing = sorted(r for r in required if r not in committed)
+    if not missing:
+        print(f"anim clips: {len(required)} required, all committed in {treeish}")
+        return 0
+    print(f"animation clips missing from {treeish} — CI cannot render them:")
+    for rel in missing:
+        hint = (
+            "rendered but not committed"
+            if (REPO / rel).exists()
+            else "needs `make split` to render"
+        )
+        print(f"    {rel}  ({hint})")
+    print(
+        "  render with `make split` (needs manim + `pip install -e tools/icm_anim`),\n"
+        "  then commit the new mp4s together with the icm-text pin bump."
+    )
+    return 1
+
+
 def main() -> int:
     if not SOURCE.exists() or not any(SOURCE.iterdir()):
         sys.exit(
@@ -1249,7 +1327,19 @@ def cli() -> int:
         default=0,
         help="section index for --page cell ids (default: 0)",
     )
+    ap.add_argument(
+        "--check-anim",
+        nargs="?",
+        const="HEAD",
+        default=None,
+        metavar="TREEISH",
+        help="verify every animation clip TREEISH's icm-text pin needs is "
+        "committed in TREEISH (default: HEAD) instead of splitting; renders "
+        "and writes nothing",
+    )
     args = ap.parse_args()
+    if args.check_anim:
+        return check_anim_committed(args.check_anim)
     if args.page:
         split_standalone_page(args.page.resolve(), args.chapter, args.section)
         return 0

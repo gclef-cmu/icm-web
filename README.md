@@ -89,8 +89,8 @@ the round-trip.
 ## Authoring
 
 Pages are **MyST Markdown** (`.md`) or notebooks (`.ipynb`). Live references
-for every feature: `content/template-md.md` (prose) and
-`content/template-notebook.ipynb` (runnable code, audio, plots). Chapters are
+for every feature: `content/templates/template-md.md` (prose) and
+`content/templates/template-notebook.ipynb` (runnable code, audio, plots). Chapters are
 folders `content/book/chNN/` with one file per section; the section number lives
 in each H1.
 
@@ -229,7 +229,7 @@ force-installs the fork. After recreating an env, run the
 from `environment.yml`.
 
 **Smoke test** after touching any of this: `make serve`, open
-`http://localhost:8000/template-notebook.html` (must be `http://`, not
+`http://localhost:8000/templates/template-notebook.html` (must be `http://`, not
 `file://`). Cells should be editable immediately with no layout shift; ▶ Run
 on the `pq.play(tone)` cell should boot the kernel and produce a working
 audio card. `pq.record(...)` records from the mic via the browser. §5 of the

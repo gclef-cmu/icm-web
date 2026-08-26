@@ -1383,8 +1383,14 @@ html[data-theme="dark"] .bd-content div.cell_output .output.text_html:has(> .icm
    here instead: drop its sidebar section and keep the prev/next footer
    from walking into it. Human entry point: the unlinked /templates/ page.
    ====================================================================== */
-nav.bd-links p.caption:has(+ ul a[href$="templates/index.html"]),
-nav.bd-links p.caption:has(+ ul a[href$="templates/index.html"]) + ul {
+/* Two suffixes because sidebar hrefs are page-relative: on a template page
+   the hub link is plain "index.html", but the sibling entries still end in
+   template-interactive/index.html or template-animation/index.html (the
+   current page renders as "#", so no single suffix matches everywhere). */
+nav.bd-links p.caption:has(+ ul a[href$="template-interactive/index.html"]),
+nav.bd-links p.caption:has(+ ul a[href$="template-interactive/index.html"]) + ul,
+nav.bd-links p.caption:has(+ ul a[href$="template-animation/index.html"]),
+nav.bd-links p.caption:has(+ ul a[href$="template-animation/index.html"]) + ul {
   display: none;
 }
 .prev-next-area a[href*="template"] {

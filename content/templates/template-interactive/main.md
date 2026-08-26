@@ -14,7 +14,7 @@ Use it three ways:
 3. **As a worked example** — every cell on this page runs: Section 6 shows the
    same cell under all three visibility modes and Section 7 is a finished
    widget. Compare the page against its sources in
-   `content/template-interactive/` (`main.md` plus the `notebooks/` folder).
+   `content/templates/template-interactive/` (`main.md` plus the `notebooks/` folder).
 
 :::{seealso}
 For prose-only pages see the {doc}`Markdown template <../template-md>`; for
@@ -75,7 +75,7 @@ build environment is a superset of it.
 
 :::{note}
 This page itself is built by that pipeline. Its sources live in
-`content/template-interactive/`: `main.md` (the prose you are reading, plus
+`content/templates/template-interactive/`: `main.md` (the prose you are reading, plus
 its `{interactive}` directives) and the `notebooks/` folder beside it.
 `make template-interactive` expands them into the `index.ipynb` that
 `_toc.yml` points at — the same expansion `make split` performs for chapter
@@ -109,28 +109,41 @@ every example on this page reads instantly:
        widgets.interactive_output(update, {"a": amp})
 
        out = widgets.Output()            # the audio card, always current
+       gate = icm_plotly.release_gate()  # pointer state: mid-drag?
        pending = []
+       dirty = []
 
        def render():
-           out.outputs = ()
-           out.append_display_data(Audio(amp.value * y0, rate=sr, normalize=False))
+           audio = Audio(amp.value * y0, rate=sr, normalize=False)
+           data, metadata = get_ipython().display_formatter.format(audio)
+           out.outputs = ({"output_type": "display_data",
+                           "data": data, "metadata": metadata},)
 
        async def settle():
            await asyncio.sleep(0.25)
            pending.clear()
-           render()
+           if dirty and not gate.dragging:
+               dirty.clear()
+               render()
 
        def on_change(_):
+           dirty.append(True)
            if pending:
                pending.pop().cancel()
-           else:
-               out.outputs = ()
            pending.append(asyncio.ensure_future(settle()))
 
+       def on_release(change):
+           if not change["new"] and dirty:
+               if pending:
+                   pending.pop().cancel()
+               dirty.clear()
+               render()
+
        amp.observe(on_change, names="value")
+       gate.observe(on_release, names="dragging")
        if not os.environ.get("ICM_BOOK_BUILD"):
            render()
-       return widgets.VBox([amp, out])
+       return widgets.VBox([amp, out, gate])
 
    icm_plotly.show(figure, controls)
    ```
@@ -143,9 +156,11 @@ and its `update(...)` callback runs in **Python** on every slider move —
 on the book page, that is the in-browser kernel that `# autorun` boots at
 page load. When the kernel is up, the sliders appear and the baked figure
 is swapped for the live one. Sound lives in `controls(fig)` too: an
-audio card in a `widgets.Output` under the sliders that clears on the first
-move of a drag and re-renders itself a moment after the sliders settle, so
-whatever the reader plays is always the settings on screen. Importing `icm_plotly` also applies
+audio card in a `widgets.Output` under the sliders. The previous clip
+stays in place while a drag is underway (so the layout never jumps) and is
+swapped for the freshly rendered one when the pointer releases (keyboard
+nudges settle on a short timer), so whatever the reader plays is always
+the settings on screen. Importing `icm_plotly` also applies
 the house figure style, so neither function contains styling code
 (Section 5).
 
@@ -179,8 +194,15 @@ The rules of the pattern — each one earned by a real failure:
   `out.append_display_data(Audio(x, rate=sr, normalize=False))`
   (`IPython.display.Audio`, the element `pq.play` shows; the book's chip
   wraps it). `observe` every slider: the first change of a drag clears the
-  card and a short `asyncio` timer, cancelled and rescheduled per change,
-  re-renders it about 0.25 s after the last one. Call `render()` once at
+  card dirty, and the release of the pointer re-renders it: include an
+  `icm_plotly.release_gate()` in the VBox (a hidden widget whose
+  `dragging` trait mirrors the pointer) and render on its falling edge,
+  keeping the short `asyncio` settle timer as the keyboard fallback.
+  Never clear the card in between, and write the replacement as ONE
+  `out.outputs = (...)` assignment (format the `Audio` yourself with
+  `get_ipython().display_formatter.format`): the old clip stays visible
+  during the drag and swaps in place, so the figure below never moves.
+  Call `render()` once at
   the end, guarded by `if not os.environ.get("ICM_BOOK_BUILD")` so the
   build bakes no card (the ghost reserves the card's height). The result:
   there is never a stale clip to press. A separate "hear it" cell makes
