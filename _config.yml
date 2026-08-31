@@ -186,6 +186,9 @@ sphinx:
       # loads on the first Run. live-cells.css pairs with it.
       - live-cells.js
       - page-toc.js
+      # Anchors inside sphinx-design tabs (pure-CSS radios) need JS to
+      # switch the tab open before the browser can scroll to them.
+      - tab-anchors.js
     thebe_config:
       use_thebe_lite: true
       # The extension would copy book SOURCE files into _build/html for the
