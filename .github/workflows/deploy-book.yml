@@ -7,7 +7,9 @@ on:
   workflow_dispatch:
   # Builds are deterministic: the book only changes when the repo (incl. the
   # pinned icm-text/icm-f26 submodules) does. (pyquist temporarily floats on
-  # a branch — see its fetch step.)
+  # a branch — see its fetch step.) A fork without the icm-f26 read-token
+  # secret builds the HEAD of icm-text and of its own icm-f26 mirror branch
+  # instead — see the submodule fetch step.
 
 permissions:
   contents: read
@@ -34,7 +36,8 @@ jobs:
         # NOTE: do NOT set `submodules: true` — .gitmodules uses SSH URLs and
         # icm-f26 is private, so the default checkout can't fetch them. Each
         # submodule is fetched explicitly below over HTTPS instead (pyquist
-        # and icm-text anonymously, icm-f26 with a read-token secret).
+        # and icm-text anonymously, icm-f26 with a read-token secret or from
+        # a fork's mirror branch).
 
       - name: Fetch pyquist submodule (public, over HTTPS)
         run: |
@@ -44,16 +47,29 @@ jobs:
           # submodule pointer in icm-web and push.
           git submodule update --init pyquist
 
-      - name: Fetch icm-text + icm-f26 submodules (pinned, over HTTPS)
+      - name: Fetch icm-text + icm-f26 submodules (over HTTPS)
+        env:
+          ICM_F26_READ_TOKEN: ${{ secrets.ICM_F26_READ_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           # URLs must be set BEFORE --init so init doesn't copy the SSH URLs
           # from .gitmodules (same trick as the pyquist step above). icm-text
-          # (the public pcm repo) fetches anonymously; private icm-f26 needs
-          # its read-token secret. No --remote: both stay at the SHAs pinned
-          # by this commit.
+          # (the public pcm repo) fetches anonymously.
           git config submodule.icm-text.url https://github.com/chrisdonahue/pcm.git
-          git config submodule.icm-f26.url "https://x-access-token:${{ secrets.ICM_F26_READ_TOKEN }}@github.com/gclef-cmu/icm-f26.git"
-          git submodule update --init icm-text icm-f26
+          if [ -n "$ICM_F26_READ_TOKEN" ]; then
+            # Upstream: private icm-f26 via its read-token secret. No
+            # --remote: both stay at the SHAs pinned by this commit.
+            git config submodule.icm-f26.url "https://x-access-token:${ICM_F26_READ_TOKEN}@github.com/gclef-cmu/icm-f26.git"
+            git submodule update --init icm-text icm-f26
+          else
+            # A fork with no secret: build the HEAD of icm-text and of the
+            # icm-f26 mirror branch that `make dev-mirror` pushes into this
+            # repo, read with the workflow's own token.
+            git submodule update --init --remote icm-text
+            git clone --depth 1 --branch icm-f26 \
+              "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" icm-f26 \
+              || { echo "::error::no icm-f26 branch in ${GITHUB_REPOSITORY}; run: make dev-mirror"; exit 1; }
+          fi
 
       # autodoc imports pyquist.device, whose sounddevice dependency dlopens
       # PortAudio at import time — without this the build dies.

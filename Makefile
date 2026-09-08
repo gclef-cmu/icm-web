@@ -1,4 +1,4 @@
-.PHONY: book clean spotless all serve check pdf pyquist split merge submodules wheels check-thebe-fork check-split vendor-pyodide template-interactive template-animation
+.PHONY: book clean spotless all serve check pdf pyquist split merge submodules wheels dev-mirror check-thebe-fork check-split vendor-pyodide template-interactive template-animation
 
 all: book
 
@@ -13,6 +13,14 @@ submodules:
 			git submodule update --init "$$sub"; \
 		fi; \
 	done
+
+# For a fork that can't hold the icm-f26 read-token secret (see
+# deploy-book.yml): push the local icm-f26 checkout's HEAD into the fork as
+# branch `icm-f26`, which the workflow there clones with its own token.
+# DEV_REMOTE names the fork's git remote.
+DEV_REMOTE ?= dev
+dev-mirror:
+	git -C icm-f26 push --force "$$(git remote get-url $(DEV_REMOTE))" HEAD:refs/heads/icm-f26
 
 # Regenerate the gitignored book sources from the pinned submodules:
 # icm-text/ -> content/book/ch{nn}/ (+ the chapter part of _toc.yml),
