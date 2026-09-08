@@ -44,6 +44,7 @@ html[data-theme="light"] {
   --icm-accent-3:  var(--cmu-iron);
   --icm-box-bg:      #faf7f4;
   --icm-box-border:  #e7ded6;
+  --icm-seek-track:  rgba(196, 18, 48, 0.18);
   --icm-title-bg:    rgba(196, 18, 48, 0.08);
   --icm-title-bg-2:  rgba(253, 181, 21, 0.16);
   --icm-title-bg-3:  rgba(109, 110, 113, 0.10);
@@ -94,6 +95,7 @@ html[data-theme="dark"] {
   --icm-accent-3:  #a3a4a7;   /* lightened iron gray for dark surfaces */
   --icm-box-bg:      #292521;
   --icm-box-border:  #453f39;
+  --icm-seek-track:  rgba(232, 84, 106, 0.28);
   --icm-title-bg:    rgba(232, 84, 106, 0.14);
   --icm-title-bg-2:  rgba(253, 181, 21, 0.14);
   --icm-title-bg-3:  rgba(163, 164, 167, 0.14);
@@ -1177,6 +1179,165 @@ figcaption .caption-number {
   margin-top: 0.35rem;
   font-size: 0.9em;
   color: var(--cmu-iron);
+}
+
+/* ======================================================================
+   SHOWCASE ({showcase} directive, _ext/icm_showcase.py)
+   One card per featured piece on the course Showcase: the audio chip at
+   extra-large size beside the student's name and a seek bar with a time
+   readout, the download icon on the trailing edge, and the composer's
+   notes below. audio-chip.js drives the seek bar through the
+   `.audio-track` row.
+   ====================================================================== */
+.showcase-card {
+  margin: 1.4rem 0;
+  padding: 1.1rem 1.4rem;
+  background: var(--icm-box-bg);
+  border: 1px solid var(--icm-box-border);
+  border-left: 3px solid var(--icm-accent);
+  border-radius: 6px;
+}
+/* The player row: chip, name over the seek bar, download. */
+.showcase-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.audio-chip-xl {
+  width: 2.9em;
+  height: 2.9em;
+}
+.audio-chip-xl .audio-chip-icon {
+  width: 1.3em;
+  height: 1.3em;
+}
+.showcase-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* `.bd-article` so this outranks the body justify/hyphenate rule. */
+.bd-article .showcase-name {
+  margin: 0 0 0.3rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  hyphens: none;
+}
+.bd-article .showcase-name.showcase-anon {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--pst-color-text-muted);
+}
+
+/* Seek bar + time readout, in the sans UI style of the audio-output meta. */
+.audio-scrub {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.audio-time {
+  flex: none;
+  font-family: var(--pst-font-family-base, sans-serif);
+  font-size: 0.74rem;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--icm-accent-3);
+  white-space: nowrap;
+}
+/* The range input is a transparent 16px hit area; the visible 4px track
+   is painted on the vendor track pseudo-elements, red up to `--p` (the
+   played fraction, set inline by audio-chip.js). Vendor pseudo-elements
+   stay in separate rules: one unknown selector voids a whole rule. */
+.audio-seek {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.audio-seek:focus {
+  outline: none;
+}
+.audio-seek:focus-visible {
+  outline: 2px solid var(--icm-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.audio-seek::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--icm-accent) var(--p, 0%), var(--icm-seek-track) var(--p, 0%));
+}
+.audio-seek::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--icm-accent) var(--p, 0%), var(--icm-seek-track) var(--p, 0%));
+}
+/* The thumb: a red dot shown on hover or keyboard focus. WebKit aligns
+   its top with the track's top, hence the negative margin ((4px - 12px)
+   / 2); Firefox centers it. */
+.audio-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--icm-accent);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.audio-seek::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--icm-accent);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.audio-seek:hover::-webkit-slider-thumb,
+.audio-seek:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
+}
+.audio-seek:hover::-moz-range-thumb,
+.audio-seek:focus-visible::-moz-range-thumb {
+  opacity: 1;
+}
+
+/* Composer's notes: under the name (indented past the chip and the head
+   gap) on wide screens, full width on narrow ones. */
+.showcase-notes {
+  margin-top: 0.9rem;
+}
+@media (min-width: 600px) {
+  .showcase-notes {
+    margin-left: calc(2.9em + 1rem);
+  }
+}
+.bd-article .showcase-notes-label {
+  margin: 0 0 0.25rem;
+  font-family: var(--pst-font-family-base, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  hyphens: none;
+  color: var(--icm-accent-3);
+}
+.bd-article .showcase-notes p {
+  text-align: left;
+  hyphens: manual; /* ragged right: no auto-hyphenation */
+}
+.showcase-notes > :last-child {
+  margin-bottom: 0;
 }
 
 /* ======================================================================

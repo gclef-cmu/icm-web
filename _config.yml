@@ -92,6 +92,7 @@ sphinx:
   #   icm_roles       — inline roles {vocab} and {unit}
   #   icm_glossary    — groups the Glossary into an A–Z index
   #   icm_audio       — the {audio} directive and role (captioned players)
+  #   icm_showcase    — the {showcase} directive (student-work cards on the Showcase page)
   #   icm_figure      — {figure} that also takes a simple image+caption body
   #   icm_pyquist     — the {pyquist} role: links into the Pyquist API reference
   #   icm_interactive — the {interactive} directive (live companion notebooks)
@@ -105,6 +106,7 @@ sphinx:
     icm_roles: _ext/
     icm_glossary: _ext/
     icm_audio: _ext/
+    icm_showcase: _ext/
     icm_figure: _ext/
     icm_pyquist: _ext/
     icm_interactive: _ext/

@@ -13,7 +13,14 @@ parts:
         sections:
           - file: course/assignments/01
           - file: course/assignments/02
-          - file: course/assignments/03
+          - file: course/assignments/03/index
+            sections:
+              - file: course/assignments/03/1-creative
+                title: "Direction 1 (Creative)"
+              - file: course/assignments/03/2-technical
+                title: "Direction 2 (Technical)"
+              - file: course/assignments/03/3-technical
+                title: "Direction 3 (Technical)"
           - file: course/assignments/04
           - file: course/assignments/05
           - file: course/assignments/06
@@ -26,7 +33,7 @@ parts:
           - file: course/resources/2-technical
           - file: course/resources/3-ai
           - file: course/resources/4-other
-      - file: course/showcase
+      - file: course/showcase/index
       - file: course/syllabus
       - file: pyquist/Overview
         sections:
@@ -83,6 +90,7 @@ parts:
           - file: book/ch04/04
           - file: book/ch04/05
           - file: book/ch04/06
+          - file: book/ch04/07
       - file: book/ch05/index
         sections:
           - file: book/ch05/00

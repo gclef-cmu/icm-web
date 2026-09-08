@@ -184,10 +184,11 @@ book: check-split check-thebe-fork wheels vendor-thebe vendor-pyodide
 		--path-output "$(CURDIR)" --config "$(CURDIR)/_config.yml" --toc "$(CURDIR)/_toc.yml"
 	@# Sphinx doesn't track files referenced by raw <img>/<audio>/<video>
 	@# HTML tags, so copy each chapter's assets, the pre-rendered anim clips,
-	@# and the course sections' verbatim static/ trees (example submissions —
-	@# audio, src/, write-ups — that pages link to with plain relative URLs)
-	@# into the build output ourselves (dest drops the content/ prefix).
-	@for d in content/book/ch*/assets content/book/ch*/anim content/templates/template-animation/anim content/course/*/static; do \
+	@# the course sections' verbatim static/ trees (example submissions —
+	@# audio, src/, write-ups — that pages link to with plain relative URLs),
+	@# and the Showcase's per-assignment clip folders (showcase/A1/, ...) into
+	@# the build output ourselves (dest drops the content/ prefix).
+	@for d in content/book/ch*/assets content/book/ch*/anim content/templates/template-animation/anim content/course/*/static content/course/showcase/*; do \
 		[ -d "$$d" ] || continue; \
 		dest="_build/html/$$(dirname "$${d#content/}")"; \
 		mkdir -p "$$dest"; \

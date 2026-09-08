@@ -321,6 +321,28 @@ clip's `[label]` into the `{audio}` role (dropping any descriptive text beside
 it) and picks the `audio-figure` / `audio-board` / `audio-list` wrapper shown
 here.
 
+### 5.3 Student showcase — the `{showcase}` directive
+
+The course Showcase page features one card per piece with the `{showcase}` directive (defined in `_ext/icm_showcase.py`; it shares the play button and download control with `{audio}`, and `_static/audio-chip.js` drives its seek bar). The body is a Markdown link whose **text is the student's name** and whose target is the clip, followed by the composer's notes as ordinary Markdown. The card shows the name, a seek bar with a time readout, and the notes under a "Composer's notes" label (a card with no notes has no label). Write the name as `Anonymous` for an unattributed piece — the card styles it as such. Names are plain text (no bold or links inside the brackets), and a directive nested in the notes needs the outer fence lengthened to `::::{showcase}`. On the course site the clips sit beside the page in a per-assignment folder (`showcase/A1/`), which the Makefile copies into the build.
+
+Source:
+
+````markdown
+:::{showcase}
+[Ada Lovelace](../book/ch01/assets/audio-sine-440.wav)
+
+A few sentences from the composer: what the piece is, how it was made, and what to listen for.
+:::
+````
+
+Rendered:
+
+:::{showcase}
+[Ada Lovelace](../book/ch01/assets/audio-sine-440.wav)
+
+A few sentences from the composer: what the piece is, how it was made, and what to listen for.
+:::
+
 ## 6. Mathematics
 
 **Inline and display math.**
