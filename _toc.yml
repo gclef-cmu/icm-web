@@ -166,6 +166,8 @@ parts:
           - file: book/ch10/07
           - file: book/ch10/08
       - file: book/ch11/index
+        sections:
+          - file: book/ch11/00
       - file: book/ch12/index
       - file: book/ch13/index
       - file: book/ch14/index
