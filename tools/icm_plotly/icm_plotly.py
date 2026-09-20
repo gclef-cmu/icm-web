@@ -236,6 +236,25 @@ def _ghost_controls(fig, controls):
     return markup
 
 
+def _ghost_label(text):
+    """Escape a control's description for the ghost, turning ``$...$`` into
+    the span the page's MathJax typesets at load (MyST's own inline-math
+    markup), so a label like ``$\\theta_1$ (deg)`` already reads as math
+    before the kernel arrives, as the live label does once ipywidgets
+    typesets it."""
+    import html as _html
+    import re
+
+    out, pos = [], 0
+    for m in re.finditer(r"\$([^$]+)\$", text):
+        out.append(_html.escape(text[pos:m.start()]))
+        out.append('<span class="math notranslate nohighlight">\\('
+                   + _html.escape(m.group(1)) + '\\)</span>')
+        pos = m.end()
+    out.append(_html.escape(text[pos:]))
+    return "".join(out)
+
+
 def _ghost_html(w):
     """Markup for one widget, recursing through boxes.
 
@@ -259,7 +278,7 @@ def _ghost_html(w):
     desc = getattr(w, "description", "") or ""
     width = getattr(getattr(w, "style", None), "description_width", "") or ""
     style = f' style="width:{esc(width)}"' if width else ""
-    label = f'<span class="icm-ghost-label"{style}>{esc(desc)}</span>' if desc else ""
+    label = f'<span class="icm-ghost-label"{style}>{_ghost_label(desc)}</span>' if desc else ""
     lay = getattr(w, "layout", None)
     row_css = "".join(
         f"{prop}:{esc(val)};" for prop, val in (
@@ -294,7 +313,7 @@ def _ghost_html(w):
                 f'<span class="icm-ghost-select">{esc(str(w.label or ""))}</span></div>')
     if isinstance(w, widgets.Checkbox):
         box = "☑" if w.value else "☐"
-        return f'<div class="icm-ghost-row icm-ghost-checkbox"{row}><span class="icm-ghost-check">{box}</span>{esc(desc)}</div>'
+        return f'<div class="icm-ghost-row icm-ghost-checkbox"{row}><span class="icm-ghost-check">{box}</span>{_ghost_label(desc)}</div>'
     if isinstance(w, (widgets.HTML, widgets.HTMLMath)):
         # the author's markup, exactly what the live widget shows
         return f'<div class="icm-ghost-row icm-ghost-html"{row}>{label}<span class="icm-ghost-html-content">{w.value}</span></div>'
