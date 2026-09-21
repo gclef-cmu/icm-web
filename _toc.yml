@@ -22,11 +22,17 @@ parts:
               - file: course/assignments/03/3-technical
                 title: "Direction 3 (Technical)"
           - file: course/assignments/04
-          - file: course/assignments/05
+          - file: course/assignments/05/index
+            sections:
+              - file: course/assignments/05/1-creative
+                title: "Direction 1 (Creative)"
+              - file: course/assignments/05/2-technical
+                title: "Direction 2 (Technical)"
           - file: course/assignments/06
           - file: course/assignments/07
           - file: course/assignments/08
           - file: course/assignments/09
+          - file: course/assignments/622-final
       - file: course/resources/index
         sections:
           - file: course/resources/1-accounts

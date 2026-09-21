@@ -5,7 +5,7 @@
 // card, _ext/icm_showcase.py) also drives that row's seek bar and time
 // readout. Chips created after page load (by live-cells.js) are wired
 // through window.icmWireAudioChip so all chips share the same
-// exclusive-playback state.
+// exclusive-playback state, which showcase video cards join too.
 (function () {
   "use strict";
 
@@ -120,10 +120,30 @@
     }
   }
 
+  // Showcase video cards (_ext/icm_showcase.py) use the browser's own
+  // <video> controls rather than a chip, but share the one-at-a-time rule:
+  // starting a video pauses whatever chip is playing, and starting a chip
+  // pauses the video. `playing` holds either kind — both are media
+  // elements, so `.pause()` is all the other side needs.
+  function wireVideo(video) {
+    if (video.dataset.acWired) return; // idempotent: safe to call twice
+    video.dataset.acWired = "1";
+    video.addEventListener("play", function () {
+      if (playing && playing !== video) playing.pause();
+      playing = video;
+    });
+    function release() {
+      if (playing === video) playing = null;
+    }
+    video.addEventListener("pause", release);
+    video.addEventListener("ended", release);
+  }
+
   window.icmWireAudioChip = wire;
 
   function init() {
     document.querySelectorAll(".audio-chip").forEach(wire);
+    document.querySelectorAll(".showcase-video-el").forEach(wireVideo);
   }
 
   if (document.readyState !== "loading") init();

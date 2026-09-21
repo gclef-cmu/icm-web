@@ -59,6 +59,14 @@ html[data-theme="light"] {
   --icm-row-orange: rgba(213, 94, 0, 0.13);
   --icm-row-pink:   rgba(204, 121, 167, 0.16);
   --icm-row-gray:   rgba(109, 110, 113, 0.13);
+
+  /* Showcase track tags — same Okabe-Ito hues, darkened for text contrast */
+  --icm-track-bg:           rgba(109, 110, 113, 0.13);
+  --icm-track-fg:           #55565a;
+  --icm-track-creative-bg:  rgba(204, 121, 167, 0.16);
+  --icm-track-creative-fg:  #8c4a70;
+  --icm-track-technical-bg: rgba(0, 114, 178, 0.13);
+  --icm-track-technical-fg: #005c8f;
 }
 
 /* ---- Dark mode ------------------------------------------------------- */
@@ -111,6 +119,14 @@ html[data-theme="dark"] {
   --icm-row-orange: rgba(240, 130, 50, 0.21);
   --icm-row-pink:   rgba(228, 147, 192, 0.21);
   --icm-row-gray:   rgba(163, 164, 167, 0.19);
+
+  /* Showcase track tags — brightened to read over #101010 */
+  --icm-track-bg:           rgba(163, 164, 167, 0.19);
+  --icm-track-fg:           #a3a4a7;
+  --icm-track-creative-bg:  rgba(228, 147, 192, 0.20);
+  --icm-track-creative-fg:  #e493c0;
+  --icm-track-technical-bg: rgba(86, 180, 233, 0.22);
+  --icm-track-technical-fg: #56b4e9;
 }
 
 /* ---- Typography: the textbook serif, scoped to article content ------- */
@@ -1197,10 +1213,12 @@ figcaption .caption-number {
   border-left: 3px solid var(--icm-accent);
   border-radius: 6px;
 }
-/* The player row: chip, name over the seek bar, download. */
+/* Every card is three stacked rows — title, player, notes — sharing one
+   leading edge, so an audio card's name and a video card's name line up
+   even though one has a play chip and the other a video frame. */
 .showcase-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
 }
 .audio-chip-xl {
@@ -1217,7 +1235,7 @@ figcaption .caption-number {
 }
 /* `.bd-article` so this outranks the body justify/hyphenate rule. */
 .bd-article .showcase-name {
-  margin: 0 0 0.3rem;
+  margin: 0;
   font-size: 1.2rem;
   font-weight: 600;
   line-height: 1.25;
@@ -1230,9 +1248,63 @@ figcaption .caption-number {
   color: var(--pst-color-text-muted);
 }
 
-/* Seek bar + time readout, in the sans UI style of the audio-output meta. */
+/* Track tag beside the name (`:track:` on the directive). A real inline
+   node, not raw HTML, so it survives into the PDF; an unrecognised track
+   name keeps the neutral gray. */
+.bd-article .showcase-name .showcase-track {
+  display: inline-block;
+  margin-left: 0.55em;
+  padding: 0.14em 0.6em;
+  vertical-align: 0.14em;
+  border-radius: 999px;
+  font-family: var(--pst-font-family-base, sans-serif);
+  font-size: 0.6rem;
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--icm-track-bg);
+  color: var(--icm-track-fg);
+}
+.bd-article .showcase-name .showcase-track-creative {
+  background: var(--icm-track-creative-bg);
+  color: var(--icm-track-creative-fg);
+}
+.bd-article .showcase-name .showcase-track-technical {
+  background: var(--icm-track-technical-bg);
+  color: var(--icm-track-technical-fg);
+}
+
+/* The player row. Audio lays the chip and the seek bar out side by side;
+   video fills the row with the frame. Both start at the card's leading
+   edge, directly under the name. */
+.showcase-media {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+.showcase-media-video {
+  display: block; /* the frame fills the row rather than sitting in a flex line */
+  border-radius: 4px;
+  overflow: hidden; /* clip the video's corners to the radius */
+  background: #000;
+  line-height: 0; /* kill the inline-element descender gap under the video */
+}
+.showcase-video-el {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+}
+
+/* Seek bar + time readout, in the sans UI style of the audio-output meta.
+   Takes the rest of the player row once the chip has its width. */
 .audio-scrub {
   display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
   align-items: center;
   gap: 0.7rem;
 }
@@ -1311,15 +1383,10 @@ figcaption .caption-number {
   opacity: 1;
 }
 
-/* Composer's notes: under the name (indented past the chip and the head
-   gap) on wide screens, full width on narrow ones. */
+/* Composer's notes: full width under the player, on the card's leading
+   edge like the name and the player above it. */
 .showcase-notes {
   margin-top: 0.9rem;
-}
-@media (min-width: 600px) {
-  .showcase-notes {
-    margin-left: calc(2.9em + 1rem);
-  }
 }
 .bd-article .showcase-notes-label {
   margin: 0 0 0.25rem;
