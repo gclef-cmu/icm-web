@@ -54,19 +54,14 @@ def cell_visibility(source: str) -> str:
 
 # Companion notebooks reference chapter data as ../assets/ etc., correct from
 # their notebooks/ dir; embedding hoists their cells up next to the page, so
-# those prefixes become page-relative ./assets/ etc. Kept in lockstep with
+# those prefixes become page-relative ./assets/ etc. Also matches bare dirs
+# like Path("../assets") (no trailing slash). Kept in lockstep with
 # tools/split_chapters.py.
-FLATTEN_PATH_REWRITES = (
-    ("../assets/", "./assets/"),
-    ("../code/", "./code/"),
-    ("../figures/", "./figures/"),
-)
+FLATTEN_PATH_PATTERN = re.compile(r"\.\./(assets|code|figures)(?![\w.-])")
 
 
 def rewrite_flattened_paths(source: str) -> str:
-    for old, new in FLATTEN_PATH_REWRITES:
-        source = source.replace(old, new)
-    return source
+    return FLATTEN_PATH_PATTERN.sub(r"./\1", source)
 
 
 class InteractiveDirective(Directive):

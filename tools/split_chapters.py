@@ -113,19 +113,14 @@ def parse_directive_arg(arg: str) -> str:
 
 # Companion notebooks reference chapter data as ../assets/ etc., correct
 # from their notebooks/ dir; flattening hoists their cells one level up,
-# so those prefixes become chapter-root ./assets/ etc. Kept in lockstep
-# with _ext/icm_interactive.py.
-FLATTEN_PATH_REWRITES = (
-    ("../assets/", "./assets/"),
-    ("../code/", "./code/"),
-    ("../figures/", "./figures/"),
-)
+# so those prefixes become chapter-root ./assets/ etc. Also matches bare
+# dirs like Path("../assets") (no trailing slash). Kept in lockstep with
+# _ext/icm_interactive.py.
+FLATTEN_PATH_PATTERN = re.compile(r"\.\./(assets|code|figures)(?![\w.-])")
 
 
 def rewrite_flattened_paths(source: str) -> str:
-    for old, new in FLATTEN_PATH_REWRITES:
-        source = source.replace(old, new)
-    return source
+    return FLATTEN_PATH_PATTERN.sub(r"./\1", source)
 
 
 # ---- {animation} pre-rendering ---------------------------------------------
