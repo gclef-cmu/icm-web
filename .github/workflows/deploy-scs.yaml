@@ -77,6 +77,27 @@ jobs:
       - name: Split book sources
         run: make split
 
+      - name: Seed Freesound API credentials
+        env:
+          FREESOUND_CLIENT_ID: ${{ secrets.FREESOUND_CLIENT_ID }}
+          FREESOUND_CLIENT_SECRET: ${{ secrets.FREESOUND_CLIENT_SECRET }}
+        run: |
+          if [ -z "$FREESOUND_CLIENT_ID" ] || [ -z "$FREESOUND_CLIENT_SECRET" ]; then
+            echo "::warning::FREESOUND_CLIENT_ID/SECRET secrets not set; notebooks using Freesound will fail"
+            exit 0
+          fi
+          python - <<'EOF'
+          import json, os
+          from pyquist.paths import CACHE_DIR
+          path = CACHE_DIR / "freesound" / "api_key.json"
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps({
+              "client_id": os.environ["FREESOUND_CLIENT_ID"],
+              "client_secret": os.environ["FREESOUND_CLIENT_SECRET"],
+          }))
+          print("wrote", path)
+          EOF
+
       - name: Build the book
         run: make book
       # ==== ...to here (keep the comments from deploy-book.yml too) ====
