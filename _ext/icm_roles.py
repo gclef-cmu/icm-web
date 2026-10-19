@@ -42,10 +42,19 @@ class VocabRole(SphinxRole):
     """``{vocab}`term``` — an italic link to the term's glossary entry.
 
     An unknown term warns at build time, keeping glossary and prose in sync.
+    Each use also gets a per-page anchor and is recorded in
+    ``env.icm_vocab_uses`` so the Glossary can link each entry to the
+    term's first appearance (see _ext/icm_glossary.py).
     """
 
     def run(self):
         term = self.text.strip()
+        anchor = "vocab-%d" % self.env.new_serialno("vocab")
+        uses = getattr(self.env, "icm_vocab_uses", None)
+        if uses is None:
+            uses = self.env.icm_vocab_uses = {}
+        uses.setdefault(self.env.docname, []).append((term, anchor))
+        target = nodes.target("", "", ids=[anchor])
         inner = nodes.emphasis(self.rawtext, term, classes=["vocab"])
         refnode = addnodes.pending_xref(
             self.rawtext,
@@ -57,7 +66,21 @@ class VocabRole(SphinxRole):
             refwarn=True,
         )
         self.set_source_info(refnode)
-        return [refnode], []
+        return [target, refnode], []
+
+
+def purge_vocab_uses(app: Sphinx, env, docname: str) -> None:
+    getattr(env, "icm_vocab_uses", {}).pop(docname, None)
+
+
+def merge_vocab_uses(app: Sphinx, env, docnames: set[str], other) -> None:
+    uses = getattr(env, "icm_vocab_uses", None)
+    if uses is None:
+        uses = env.icm_vocab_uses = {}
+    other_uses = getattr(other, "icm_vocab_uses", {})
+    for docname in docnames:
+        if docname in other_uses:
+            uses[docname] = other_uses[docname]
 
 
 class IconRole(SphinxRole):
@@ -242,6 +265,8 @@ def setup(app: Sphinx) -> dict:
     app.add_role("icon-ai-lead", IconRole("ai", lead=True))
     app.add_role("icon-noai-lead", IconRole("noai", lead=True))
     app.connect("source-read", substitute_inline)
+    app.connect("env-purge-doc", purge_vocab_uses)
+    app.connect("env-merge-info", merge_vocab_uses)
     return {
         "version": "0.1",
         "parallel_read_safe": True,

@@ -896,6 +896,18 @@ html[data-theme="dark"] .bd-article a.glossary-nav-letter {
 .bd-article dl.glossary > dt::first-letter {
   text-transform: uppercase;
 }
+.bd-article dl.glossary > dt.glossary-keep-case::first-letter {
+  text-transform: none;
+}
+/* Headwords link to the term's first use (_ext/icm_glossary.py). */
+.bd-article dl.glossary > dt a.glossary-first-use {
+  color: var(--pst-color-link);
+  text-decoration: none;
+}
+.bd-article dl.glossary > dt a.glossary-first-use:hover {
+  color: var(--pst-color-link-hover);
+  text-decoration: underline;
+}
 .bd-article dl.glossary > dt .headerlink {
   color: var(--pst-color-text-muted);
   font-weight: normal;
