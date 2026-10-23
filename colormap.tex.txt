@@ -23,3 +23,7 @@
 \newcommand{\peagreen}[1]{\color{peagreen} #1\normalcolor}
 \newcommand{\darkblue}[1]{\color{darkblue} #1\normalcolor}
 \newcommand{\darkorange}[1]{\color{darkorange} #1\normalcolor}
+
+% := for definitions (mirrors the MathJax macros in _config.yml).
+\def\coloneq{\mathrel{:=}}
+\def\coloneqq{\mathrel{:=}}

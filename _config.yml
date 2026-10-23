@@ -231,6 +231,9 @@ sphinx:
           "peagreen": ["\\class{peagreen}{#1}", 1]
           "darkblue": ["\\class{darkblue}{#1}", 1]
           "darkorange": ["\\class{darkorange}{#1}", 1]
+          # := for definitions; mathtools-style names, which MathJax lacks.
+          "coloneq": "\\mathrel{:=}"
+          "coloneqq": "\\mathrel{:=}"
     latex_elements:
       extrapackages: "\\usepackage{cancel,color}\n\\usepackage{epigrafica}\n"
       preamble: \input{colormap.tex.txt}
