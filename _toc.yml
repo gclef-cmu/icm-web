@@ -189,7 +189,26 @@ parts:
           - file: book/ch12/04
           - file: book/ch12/05
       - file: book/ch13/index
+        sections:
+          - file: book/ch13/00
+          - file: book/ch13/01
+          - file: book/ch13/02
+          - file: book/ch13/03
+          - file: book/ch13/04
+          - file: book/ch13/05
+          - file: book/ch13/06
+          - file: book/ch13/07
+          - file: book/ch13/08
+          - file: book/ch13/09
+          - file: book/ch13/10
       - file: book/ch14/index
+        sections:
+          - file: book/ch14/00
+          - file: book/ch14/01
+          - file: book/ch14/02
+          - file: book/ch14/03
+          - file: book/ch14/04
+          - file: book/ch14/05
       - file: book/ch15/index
       - file: book/ch16/index
       - file: book/ch17/index
