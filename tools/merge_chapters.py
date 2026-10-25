@@ -42,14 +42,28 @@ DIRECTIVE_KINDS = ("interactive", "animation")
 
 
 def reconstruct_section_md(path: Path) -> str:
-    """Rebuild the ``NN.md``-equivalent section text from a section notebook.
+    """Rebuild the ``NN.md``-equivalent section text from a section notebook."""
+    return collapse_notebook(nbformat.read(str(path), as_version=4), path)
 
-    Inverse of ``split_chapters.build_section_notebook``: prose Markdown cells
-    are emitted verbatim, and each run of cells expanded from the same
+
+def reconstruct_index_md(path: Path) -> str:
+    """Chapter-intro text from an ``index.md``, collapsing it first if the
+    intro embeds a companion notebook (split_chapters.notebook_to_myst wrote
+    it as a MyST Markdown notebook then)."""
+    text = path.read_text()
+    if not text.startswith("---\n"):
+        return text
+    from myst_nb.core.read import read_myst_markdown_notebook
+
+    return collapse_notebook(read_myst_markdown_notebook(text), path)
+
+
+def collapse_notebook(nb, path: Path) -> str:
+    """Inverse of ``split_chapters.build_section_notebook``: prose Markdown
+    cells are emitted verbatim, and each run of cells expanded from the same
     directive collapses back into the one directive line the author wrote,
     reproducing the exact string the splitter parsed.
     """
-    nb = nbformat.read(str(path), as_version=4)
     parts: list[str] = []
     last: tuple[str, str] | None = None  # (kind, path) of the previous embed cell
     seen_directive = False
@@ -153,7 +167,7 @@ def slugify(text: str) -> str:
 
 def merge_chapter(content_chapter: Path, out_root: Path) -> dict:
     idx_path = content_chapter / "index.md"
-    idx_text = idx_path.read_text()
+    idx_text = reconstruct_index_md(idx_path)
     first_line, _, idx_rest = idx_text.partition("\n")
     m = INDEX_TITLE_RE.match(first_line)
     if not m:

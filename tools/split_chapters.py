@@ -6,7 +6,8 @@ strips the frontmatter, splits the body on `## ` headings (ignoring fenced
 code blocks), demotes headings one level, copies assets/code/figures across,
 and regenerates the chapter part of _toc.yml. A section that embeds a
 companion notebook via `{interactive}`/`{animation}` is emitted as a .ipynb
-instead of .md; `{animation}` companions are additionally rendered — here,
+instead of .md (a chapter intro that does stays index.md, written as a MyST
+Markdown notebook); `{animation}` companions are additionally rendered — here,
 not at book build time — into committed clips under content/book/chNN/anim/
 (unchanged clips are reused byte-for-byte, so only new or edited scenes
 cost a manim render). It also mirrors the icm-f26/ course-website submodule
@@ -535,6 +536,42 @@ def build_section_notebook(
     return nb
 
 
+def notebook_to_myst(nb) -> str:
+    """Serialize a build_section_notebook() result as a MyST Markdown notebook.
+
+    The `file_format: mystnb` top matter makes myst-nb read the .md as a
+    notebook and execute it. Cell metadata survives the trip (markdown cells
+    as `+++ {json}` breaks, code cells as `{code-cell}` options), so the
+    page renders like a section notebook and merge_chapters can collapse
+    the expanded cells back into their directive. Cell ids are dropped.
+    """
+    top = {
+        "file_format": "mystnb",
+        "kernelspec": nb.metadata["kernelspec"],
+        "mystnb": nb.metadata["mystnb"],
+    }
+    # JSON values are valid YAML, so no yaml dependency is needed.
+    out = ["---\n", *(f"{k}: {json.dumps(v)}\n" for k, v in top.items()), "---\n\n"]
+    prev_markdown = False
+    for c in nb.cells:
+        meta = dict(c.metadata)
+        if c.cell_type == "markdown":
+            # `+++` carries a cell's metadata, and also keeps two adjacent
+            # markdown cells from fusing into one.
+            if meta or prev_markdown:
+                out.append("+++" + (f" {json.dumps(meta)}" if meta else "") + "\n\n")
+            out.append(f"{c.source}\n\n")
+            prev_markdown = True
+        else:
+            runs = re.findall(r"`+", c.source)
+            fence = "`" * max(3, max(map(len, runs), default=0) + 1)
+            opts = "".join(f"{k}: {json.dumps(v)}\n" for k, v in meta.items())
+            opts = f"---\n{opts}---\n" if opts else ""
+            out.append(f"{fence}{{code-cell}} ipython3\n{opts}{c.source}\n{fence}\n\n")
+            prev_markdown = False
+    return "".join(out).rstrip("\n") + "\n"
+
+
 def _take_trailing_targets(lines: list[str]) -> tuple[list[str], list[str]]:
     """Peel trailing `(label)=` lines (and the blanks around them) off a section.
 
@@ -824,10 +861,17 @@ def split_chapter(folder: Path) -> dict | None:
     index_md = f"# {chapter_num}. {chapter_title}\n"
     if intro_text:
         index_md += f"\n{intro_text}\n"
-    (out_dir / "index.md").write_text(index_md)
-
     section_refs: list[str] = []
     anim_requests: list[AnimRequest] = []
+    # An intro that embeds a companion notebook expands like a section does
+    # (below), but must stay index.md — every chapter link targets
+    # chNN/index.md, which won't resolve to an index.ipynb — so it's written
+    # as a MyST Markdown notebook, which myst-nb executes all the same.
+    if section_directives(index_md):
+        nb = build_section_notebook(index_md, folder, chapter_num, 0, anim_requests)
+        index_md = notebook_to_myst(nb)
+    (out_dir / "index.md").write_text(index_md)
+
     for i, (title, content_lines, leading_targets) in enumerate(sections):
         body_text = "".join(demote_headings(content_lines)).strip("\n")
         # Targets first: `(label)=` has to precede the heading it labels, and
