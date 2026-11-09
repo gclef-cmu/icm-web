@@ -156,7 +156,7 @@ FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 # ``:{color}[text]`` plus an optional ``(url)`` right after the bracket;
 # a ``-highlight`` suffix picks the chip class instead of the text color.
 COLOR_RE = re.compile(
-    r":\{((?:blue|green|orange|pink|gray)(?:-highlight)?)\}\[([^\[\]]*)\](\([^()]*\))?")
+    r":\{((?:blue|green|orange|pink|yellow|gray)(?:-highlight)?)\}\[([^\[\]]*)\](\([^()]*\))?")
 CODE_RE = re.compile(r"`+[^`]*`+")
 
 

@@ -30,7 +30,7 @@ from docutils.parsers.rst import Directive
 from docutils.statemachine import StringList
 from sphinx.application import Sphinx
 
-_COLORS = "blue|green|orange|pink|gray"
+_COLORS = "blue|green|orange|pink|yellow|gray"
 _TAG_RE = re.compile(r"^\[(%s)\]\s+(.*)$" % _COLORS)
 # A topic that is one wrapping Markdown link, e.g. "[Assignment 1 (due)](01.md)".
 _LINK_RE = re.compile(r"^\[(?P<text>.+)\]\((?P<href>\S+)\)$")

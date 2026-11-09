@@ -28,6 +28,7 @@
   --icm-c-green:  #009E73;
   --icm-c-orange: #D55E00;
   --icm-c-pink:   #CC79A7;
+  --icm-c-yellow: #A67C00;   /* Okabe-Ito yellow (#F0E442), darkened for text */
   --icm-c-gray:   #6D6E71;
 }
 
@@ -58,6 +59,7 @@ html[data-theme="light"] {
   --icm-row-green:  rgba(0, 158, 115, 0.13);
   --icm-row-orange: rgba(213, 94, 0, 0.13);
   --icm-row-pink:   rgba(204, 121, 167, 0.16);
+  --icm-row-yellow: rgba(240, 228, 66, 0.30);
   --icm-row-gray:   rgba(109, 110, 113, 0.13);
 
   /* Showcase track tags — same Okabe-Ito hues, darkened for text contrast */
@@ -118,6 +120,7 @@ html[data-theme="dark"] {
   --icm-row-green:  rgba(0, 199, 149, 0.19);
   --icm-row-orange: rgba(240, 130, 50, 0.21);
   --icm-row-pink:   rgba(228, 147, 192, 0.21);
+  --icm-row-yellow: rgba(240, 228, 66, 0.19);
   --icm-row-gray:   rgba(163, 164, 167, 0.19);
 
   /* Showcase track tags — brightened to read over #101010 */
@@ -708,6 +711,7 @@ html[data-theme="dark"] {
 .bd-article .c-green,  .bd-article a.c-green:hover  { color: var(--icm-c-green); }
 .bd-article .c-orange, .bd-article a.c-orange:hover { color: var(--icm-c-orange); }
 .bd-article .c-pink,   .bd-article a.c-pink:hover   { color: var(--icm-c-pink); }
+.bd-article .c-yellow, .bd-article a.c-yellow:hover { color: var(--icm-c-yellow); }
 .bd-article .c-gray,   .bd-article a.c-gray:hover   { color: var(--icm-c-gray); }
 
 /* On the schedule page a color class marks a row's CATEGORY, not text color:
@@ -718,23 +722,27 @@ html[data-theme="dark"] {
 .bd-article table.sched-table tr:has(.c-green) > td  { background: var(--icm-row-green); }
 .bd-article table.sched-table tr:has(.c-orange) > td { background: var(--icm-row-orange); }
 .bd-article table.sched-table tr:has(.c-pink) > td   { background: var(--icm-row-pink); }
+.bd-article table.sched-table tr:has(.c-yellow) > td { background: var(--icm-row-yellow); }
 
 .bd-article .sched-table .c-blue,
 .bd-article .sched-table .c-green,
 .bd-article .sched-table .c-orange,
-.bd-article .sched-table .c-pink {
+.bd-article .sched-table .c-pink,
+.bd-article .sched-table .c-yellow {
   color: inherit;
 }
 .bd-article .sched-table a.c-blue,
 .bd-article .sched-table a.c-green,
 .bd-article .sched-table a.c-orange,
-.bd-article .sched-table a.c-pink {
+.bd-article .sched-table a.c-pink,
+.bd-article .sched-table a.c-yellow {
   color: var(--pst-color-link);
 }
 .bd-article .sched-table a.c-blue:hover,
 .bd-article .sched-table a.c-green:hover,
 .bd-article .sched-table a.c-orange:hover,
-.bd-article .sched-table a.c-pink:hover {
+.bd-article .sched-table a.c-pink:hover,
+.bd-article .sched-table a.c-yellow:hover {
   color: var(--pst-color-link-hover);
 }
 
@@ -744,6 +752,7 @@ html[data-theme="dark"] {
 .bd-article .c-green-highlight,
 .bd-article .c-orange-highlight,
 .bd-article .c-pink-highlight,
+.bd-article .c-yellow-highlight,
 .bd-article .c-gray-highlight {
   color: inherit;
   padding: 0.05em 0.45em;
@@ -754,11 +763,12 @@ html[data-theme="dark"] {
 .bd-article .c-green-highlight  { background: var(--icm-row-green); }
 .bd-article .c-orange-highlight { background: var(--icm-row-orange); }
 .bd-article .c-pink-highlight   { background: var(--icm-row-pink); }
+.bd-article .c-yellow-highlight { background: var(--icm-row-yellow); }
 .bd-article .c-gray-highlight   { background: var(--icm-row-gray); }
 
 /* Chips are unbreakable; don't justify a paragraph that carries them. */
 .bd-article p:has(.c-blue-highlight, .c-green-highlight, .c-orange-highlight,
-                  .c-pink-highlight, .c-gray-highlight) {
+                  .c-pink-highlight, .c-yellow-highlight, .c-gray-highlight) {
   text-align: left;
   hyphens: manual;
 }
