@@ -31,8 +31,10 @@ parts:
           - file: course/assignments/06
           - file: course/assignments/07
           - file: course/assignments/08
-          - file: course/assignments/09
-          - file: course/assignments/622-final
+          - file: course/assignments/09-322
+          - file: course/assignments/09-622
+          - file: course/assignments/final-322
+          - file: course/assignments/final-622
       - file: course/resources/index
         sections:
           - file: course/resources/1-accounts
