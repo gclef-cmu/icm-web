@@ -22,7 +22,11 @@ concurrency:
 
 jobs:
   deploy-book:
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: on the 26.04 image libportaudio2 pulls in
+    # libpulse0, and PortAudio then fails Pa_Initialize with no PulseAudio
+    # server, so `import pyquist` (-> sounddevice) dies in every notebook
+    # kernel (Nov 14 2026). Keep in sync with the other deploy workflow.
+    runs-on: ubuntu-24.04
     # Normal runs finish in ~4 min; a hung runner otherwise burns the 6 h default.
     timeout-minutes: 20
 
